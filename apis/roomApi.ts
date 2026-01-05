@@ -1,0 +1,28 @@
+// api/roomApi.ts
+import { RoomInstancePayload, RoomType } from '@/type';
+import axiosClient from '../axiosclient'; // Đảm bảo đường dẫn đúng đến file axiosClient của bạn
+import { ApiResponse, RoomTypePayload, RoomTypeResponse } from '../type/room.types';
+
+const roomApi = {
+  // Lấy danh sách loại phòng của 1 khách sạn
+  getRoomTypesByHotel: (hotelId: string) => {
+    return axiosClient.get<ApiResponse<RoomType[]>>(`/hotels/${hotelId}/room-types`);
+  },
+
+  // Tạo loại phòng mới (Room Type)
+  createRoomType: (hotelId: string, data: RoomTypePayload) => {
+    return axiosClient.post<ApiResponse<RoomType>>(`/hotels/${hotelId}/room-types`, data);
+  },
+
+  // Xóa loại phòng
+  deleteRoomType: (hotelId: string, roomCode: string) => {
+    return axiosClient.delete<ApiResponse<any>>(`/hotels/${hotelId}/room-types/${roomCode}`);
+  },
+
+  // Tạo phòng vật lý (Room Instance - Số phòng, tầng...)
+  createRoomInstance: (data: RoomInstancePayload) => {
+    return axiosClient.post<ApiResponse<any>>('/hotel-rooms', data);
+  },
+};
+
+export default roomApi;

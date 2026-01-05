@@ -1,0 +1,35 @@
+{
+  "name": "wodtech-admin-console",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
+    "axios": "1.7.9",
+    "draft-js": "0.11.7",
+    "draftjs-to-html": "0.9.1",
+    "html-to-draftjs": "1.5.0",
+    "immutable": "^5.1.4",
+    "lucide-react": "^0.475.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-draft-wysiwyg": "1.15.0",
+    "react-icons": "5.5.0",
+    "react-router-dom": "7.1.5",
+    "react-toastify": "^11.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.7.4",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

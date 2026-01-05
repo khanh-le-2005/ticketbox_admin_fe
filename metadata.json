@@ -1,0 +1,5 @@
+{
+  "name": "Wodtech Admin Console",
+  "description": "A professional React admin dashboard featuring authentication, protected routes, and a sleek dark sidebar interface.",
+  "requestFramePermissions": []
+}

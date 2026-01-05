@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>momang - Quản trị Hệ thống</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- react-draft-wysiwyg CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/react-draft-wysiwyg@1.15.0/dist/react-draft-wysiwyg.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Custom editor styles to match app theme */
+    .rdw-editor-wrapper {
+      border: none !important;
+    }
+
+    .rdw-editor-main {
+      padding: 0 !important;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .rdw-toolbar-wrapper {
+      margin-bottom: 0 !important;
+      border: none !important;
+      border-bottom: 1px solid #f3f4f6 !important;
+      background: #f9fafb !important;
+      padding: 10px 15px !important;
+    }
+
+    .rdw-option-wrapper {
+      border-radius: 6px !important;
+      border: 1px solid #e5e7eb !important;
+      margin-bottom: 4px !important;
+    }
+
+    .rdw-option-active {
+      background: #fdf2f8 !important;
+      border-color: #ec4899 !important;
+    }
+  </style>
+  <script>
+    if (typeof global === 'undefined') {
+      var global = window;
+    }
+  </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react/": "https://esm.sh/react@19.0.0/",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@7.1.5?external=react,react-dom",
+    "react-icons/hi": "https://esm.sh/react-icons@5.5.0/hi?external=react",
+    "react-icons/": "https://esm.sh/react-icons@5.5.0/?external=react",
+    "lucide-react": "https://esm.sh/lucide-react@0.475.0?external=react",
+    "draft-js": "https://esm.sh/draft-js@0.11.7?external=react",
+    "html-to-draftjs": "https://esm.sh/html-to-draftjs@1.5.0",
+    "react-draft-wysiwyg": "https://esm.sh/react-draft-wysiwyg@1.15.0?external=react,react-dom,draft-js",
+    "draftjs-to-html": "https://esm.sh/draftjs-to-html@0.9.1",
+    "axios": "https://esm.sh/axios@1.7.9"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
