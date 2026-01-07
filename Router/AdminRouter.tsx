@@ -19,8 +19,7 @@ import CustomerManagement from "@/pages/CustomerManagement";
 import Dashboard from "@/pages/Dashboard";
 import StaffManagement from "@/pages/StaffManagement";
 import Stagemanager from "@/pages/Admin/Stage/StageManager";
-
-
+import CheckAction from "@/pages/Admin/Checkroom/CheckAction";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -35,21 +34,23 @@ const AdminRouter = () => {
           </ProtectedRoute>
         }
       >
-         {/* Quản lý sân khấu */}
+        {/* check in vs check out */}
+        <Route path="CheckAction" element={<CheckAction />} />
+        {/* Quản lý sân khấu */}
         <Route path="stage" element={<Stagemanager />} />
 
         <Route path="stage" element={<Stagemanager />} />
         {/* <Route path="stage/create" element={<CreateHotel />} />
         <Route path="stage/edit/:id" element={<CreateHotel />} /> */}
 
-        
-        <Route index element={<Navigate to="/admin/hotels" replace />} />
         {/* Quản lý Khách sạn */}
+        <Route index element={<Navigate to="/admin/hotels" replace />} />
         <Route path="/hotels/:hotelId/rooms" element={<RoomManagementPage />} />
         <Route path="hotels" element={<HotelManagement />} />
         <Route path="hotels/create" element={<CreateHotel />} />
         <Route path="hotels/edit/:id" element={<CreateHotel />} />
 
+        {/* Quản lý Phòng */}
         <Route path="/rooms" element={<RoomManagementPage />} />
         <Route path="/rooms/create" element={<CreateRoomPage />} />
         <Route path="/" element={<Navigate to="/rooms" replace />} />
@@ -59,6 +60,15 @@ const AdminRouter = () => {
 
         <Route path="users/customers" element={<CustomerManagement />} />
         <Route path="users/customers/detail/:id" element={<CustomerDetail />} />
+
+        <Route
+          path="/admin/companies"
+          element={
+            <ProtectedRoute>
+              <CompanyManagement />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="users/companies" element={<CompanyManagement />} />
         <Route path="users/companies/add" element={<AddCompany />} />

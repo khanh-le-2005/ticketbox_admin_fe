@@ -10,7 +10,7 @@ import {
   HiOutlineIdentification,
   HiOutlinePhone
 } from 'react-icons/hi';
-import { createCompany, getCompanyById, updateCompany } from '../apis/api_user';
+import { createCompany, getCompanyById, updateCompany } from '../apis/api_company';
 
 const AddCompany: React.FC = () => {
   const navigate = useNavigate();
@@ -82,7 +82,7 @@ const AddCompany: React.FC = () => {
       }
       
       // Quay lại tab đối tác
-      navigate('/users?tab=companies');
+      navigate('/admin/companies');
     } catch (error: any) {
       console.error('Lỗi khi lưu đối tác:', error);
 

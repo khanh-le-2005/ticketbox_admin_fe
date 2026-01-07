@@ -1,9 +1,32 @@
 import axiosClient from "@/axiosclient"; // Đảm bảo đường dẫn đúng
-import { ApiResponse, Hotel, CreateHotelRequest, UpdateHotelRequest } from "@/type";
+import {
+  ApiResponse,
+  Hotel,
+  CreateHotelRequest,
+  UpdateHotelRequest,
+} from "@/type";
 
 // Cấu hình URL gốc API để ghép link ảnh
 // Dựa trên các request trước, base là: https://api.momangshow.vn/api
 const BASE_API_URL = "https://api.momangshow.vn/api";
+
+export interface DashboardRoomInfo {
+  id: string;
+  roomNumber: string;
+  roomTypeCode: string;
+}
+
+export interface DashboardStatusGroup {
+  count: number;
+  rooms: DashboardRoomInfo[];
+}
+
+export interface HotelDashboardData {
+  available: DashboardStatusGroup;
+  occupied: DashboardStatusGroup;
+  dirty: DashboardStatusGroup;
+  maintenance: DashboardStatusGroup;
+}
 
 const hotelApi = {
   getAll: () => axiosClient.get<ApiResponse<Hotel[]>>("/hotels"),
@@ -26,37 +49,38 @@ const hotelApi = {
   // =========================================================
   uploadImage: async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
       // Gọi API POST /images
       // axiosClient đã có interceptor trả về response.data, nên biến 'res' chính là body JSON
-      const res: any = await axiosClient.post('/images', formData, {
+      const res: any = await axiosClient.post("/images", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
       // Kiểm tra logic nghiệp vụ: success === 200
       if (res.success === 200) {
-          const imageId = res.data; // Đây là ID ảnh (string)
-          
-          // Trả về object chứa cả ID và URL để UI hiển thị ngay lập tức
-          return {
-              id: imageId,
-              url: `${BASE_API_URL}/images/${imageId}` 
-          };
-      } else {
-          throw new Error(res.message || `Upload thất bại với mã lỗi: ${res.success}`);
-      }
+        const imageId = res.data; // Đây là ID ảnh (string)
 
+        // Trả về object chứa cả ID và URL để UI hiển thị ngay lập tức
+        return {
+          id: imageId,
+          url: `${BASE_API_URL}/images/${imageId}`,
+        };
+      } else {
+        throw new Error(
+          res.message || `Upload thất bại với mã lỗi: ${res.success}`
+        );
+      }
     } catch (error) {
-      console.error('Lỗi upload ảnh:', error);
+      console.error("Lỗi upload ảnh:", error);
       throw error;
     }
   },
 
-    create: (files: File[], data: CreateHotelRequest) => {
+  create: (files: File[], data: CreateHotelRequest) => {
     const formData = new FormData();
 
     // 1. Append các file ảnh vào key 'images'
@@ -78,11 +102,17 @@ const hotelApi = {
 
   // Hàm tiện ích: Lấy URL ảnh từ ID (dùng cho list/detail page)
   getImageUrl: (id: string | number | undefined) => {
-    if (!id) return 'https://placehold.co/150?text=No+Image';
+    if (!id) return "https://placehold.co/150?text=No+Image";
     const strId = String(id);
-    if (strId.startsWith('http')) return strId; // Nếu đã là link full
-    return `${BASE_API_URL}/images/${id}`;      // Nếu là ID -> ghép link
-  }
+    if (strId.startsWith("http")) return strId; // Nếu đã là link full
+    return `${BASE_API_URL}/images/${id}`; // Nếu là ID -> ghép link
+  },
+
+  getHotelDashboard: (id: string) => {
+    return axiosClient.get<ApiResponse<HotelDashboardData>>(
+      `/hotels/${id}/dashboard`
+    );
+  },
 };
 
 export default hotelApi;

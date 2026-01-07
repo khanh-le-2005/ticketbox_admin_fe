@@ -1,65 +1,84 @@
-import axios from 'axios';
-import { 
-  UserData, Company, ApiResponse, 
-  CreateUserRequest, UpdateUserRequest, BASE_URL 
-} from './api_types'; // Nhớ trỏ đúng đường dẫn file types
-export type { Company } from './api_types';
+import axiosClient from "../axiosclient";
 
-// --- Helper nội bộ ---
-const getCompaniesByRole = async (): Promise<Company[]> => {
-  try {
-    const response = await axios.get<ApiResponse>(`${BASE_URL}/users?role=TO_CHUC`);
-    if (response.data && response.data.success) {
-      return response.data.data;
-    }
-    return [];
-  } catch (error: any) {
-    console.warn(`⚠️ API lấy TO_CHUC gặp lỗi:`, error.message);
-    return [];
-  }
-};
+// --- INTERFACES ---
+export interface Company {
+  id?: string;
+  fullName: string;
+  username: string;
+  email: string;
+  phone?: string;
+  role?: "TO_CHUC"; // Cố định role
+  active?: boolean;
+  createdAt?: string;
+  password?: string; // Dùng khi tạo mới
+}
 
-// --- Main Functions ---
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// --- API FUNCTIONS ---
 
 export const getAllCompanies = async (): Promise<Company[]> => {
-  return await getCompaniesByRole();
+  const res: any = await axiosClient.get("/auth/users", {
+    params: { role: "TO_CHUC" },
+  });
+  return res.data || res;
 };
+
+// api_company.ts
 
 export const getCompanyById = async (id: string): Promise<Company> => {
   try {
-    const response = await axios.get(`${BASE_URL}/users/${id}`);
-    if (response.data && response.data.data) {
-        return response.data.data;
+    // Gọi hàm lấy danh sách ở trên
+    const allCompanies = await getAllCompanies();
+    
+    // Tìm phần tử có id khớp
+    const company = allCompanies.find((u: any) => u.id === id);
+
+    if (company) {
+      return company;
+    } else {
+      throw new Error('Không tìm thấy dữ liệu công ty này trong danh sách.');
     }
-    return response.data;
   } catch (error) {
-    console.error(`Lỗi lấy công ty ${id}:`, error);
+    console.error("Lỗi getCompanyById:", error);
     throw error;
   }
 };
 
-export const createCompany = async (data: any): Promise<any> => {
-  const payload: CreateUserRequest = {
-    username: data.username || data.email?.split('@')[0],
-    email: data.email,
-    password: data.password || '123456',
+export const createCompany = async (data: any) => {
+  const payload = {
     fullName: data.name || data.fullName,
-    role: 'TO_CHUC', // Cứng role là TO_CHUC
-    phone: data.phone
+    username: data.username,
+    email: data.email,
+    password: data.password,
+    role: "TO_CHUC",
+    phone: data.phone, // Luôn gửi chuỗi rỗng để tránh Null
   };
-  return await axios.post(`${BASE_URL}/create-user`, payload);
+  return axiosClient.post("/auth/internal/create", payload);
 };
 
-export const updateCompany = async (id: string, data: any): Promise<any> => {
-  const payload: UpdateUserRequest = {
+
+export const updateCompany = async (id: string, data: any) => {
+  const payload = {
     fullName: data.name || data.fullName,
     email: data.email,
     role: 'TO_CHUC',
-    phone: data.phone
+    
+    // 👇 QUAN TRỌNG: Backend bị lỗi so sánh null, ta phải gửi chuỗi rỗng ""
+    // Nếu data.phone là null/undefined -> gửi ""
+    phone: data.phone ? data.phone : "", 
+    
+    username: data.username
   };
-  return await axios.put(`${BASE_URL}/create-user/${id}`, payload);
+  
+  // Dùng PUT vào đường dẫn số nhiều (users)
+  return axiosClient.put(`/auth/users/${id}`, payload);
 };
 
-export const deleteCompany = async (id: string): Promise<void> => {
-  await axios.delete(`${BASE_URL}/users/${id}`);
+export const deleteCompany = async (id: string) => {
+  return axiosClient.delete(`/auth/users/${id}`);
 };

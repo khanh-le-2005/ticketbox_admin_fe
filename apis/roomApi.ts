@@ -23,6 +23,15 @@ const roomApi = {
   createRoomInstance: (data: RoomInstancePayload) => {
     return axiosClient.post<ApiResponse<any>>('/hotel-rooms', data);
   },
+
+    getRoomById: (roomId: string) => {
+    return axiosClient.get(`/hotel-rooms/${roomId}`);
+  },
+
+  // 2. Cập nhật thông tin phòng
+  updateRoom: (roomId: string, data: RoomInstancePayload & { status?: string }) => {
+    return axiosClient.put(`/hotel-rooms/${roomId}`, data);
+  },
 };
 
 export default roomApi;

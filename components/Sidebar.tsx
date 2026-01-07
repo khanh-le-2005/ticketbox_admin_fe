@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { label: "Quản lý Banner", path: "/banners", icon: <HiOutlinePhotograph size={22} /> },
     // { label: "Cấu hình hệ thống", path: "/config", icon: <HiOutlineCog size={22} /> },
     { label: "quản lý sân khấu", path: "/stage", icon: <GiPodium size={22} />},
-
+    { label: "CheckAction", path: "/CheckAction", icon: <GiPodium size={22} />},
   ];
 
   const handleLogout = () => {

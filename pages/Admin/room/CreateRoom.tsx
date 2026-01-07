@@ -1,74 +1,103 @@
-// pages/CreateRoomPage.tsx
-import React, { useState } from 'react';
-import roomApi, { RoomInstancePayload } from '@/apis/roomApi';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import roomApi from '@/apis/roomApi';
 
-const CreateRoomPage: React.FC = () => {
+const EditRoomPage: React.FC = () => {
   const navigate = useNavigate();
-  
-  // ID khách sạn cứng từ dữ liệu JSON bạn cung cấp
-  const fixedHotelId = "6951f0b479a3a77b3676fe7d"; 
+  const { id } = useParams<{ id: string }>(); // Lấy ID phòng từ URL
 
-  // State quản lý form khớp với JSON yêu cầu
-  const [formData, setFormData] = useState<RoomInstancePayload>({
-    hotelId: fixedHotelId,
-    roomTypeCode: '', // Người dùng cần nhập hoặc chọn mã loại phòng
+  // State form
+  const [formData, setFormData] = useState({
+    hotelId: '',
+    roomTypeCode: '',
     roomNumber: '',
     floor: 1,
+    status: 'AVAILABLE' // Thêm trạng thái
   });
 
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true); // Loading khi tải dữ liệu ban đầu
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- 1. LẤY DỮ LIỆU PHÒNG CŨ ---
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchRoomData = async () => {
+      try {
+        const res: any = await roomApi.getRoomById(id);
+        const data = res.data?.data || res.data; // Xử lý response
+
+        if (data) {
+          setFormData({
+            hotelId: data.hotelId || '',
+            roomTypeCode: data.roomTypeCode || '',
+            roomNumber: data.roomNumber || '',
+            floor: data.floor || 1,
+            status: data.status || 'AVAILABLE'
+          });
+        }
+      } catch (error) {
+        console.error("Lỗi tải phòng:", error);
+        setMessage({ type: 'error', text: "Không thể tải thông tin phòng này." });
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchRoomData();
+  }, [id]);
+
+  // --- 2. XỬ LÝ NHẬP LIỆU ---
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      // Nếu là floor thì convert sang number, còn lại giữ string
       [name]: name === 'floor' ? Number(value) : value,
     });
   };
 
+  // --- 3. GỬI API CẬP NHẬT ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id) return;
+
     setLoading(true);
     setMessage(null);
 
     try {
-      // Validate cơ bản
-      if (!formData.roomTypeCode || !formData.roomNumber || formData.floor < 0) {
-        throw new Error("Vui lòng nhập đầy đủ thông tin: Mã loại phòng, số phòng và tầng.");
+      // Validate
+      if (!formData.roomNumber || formData.floor < 0) {
+        throw new Error("Vui lòng nhập số phòng và tầng hợp lệ.");
       }
 
-      // Gọi API tạo phòng vật lý
-      const res: any = await roomApi.createRoomInstance(formData);
+      // Gọi API Update
+      await roomApi.updateRoom(id, formData);
       
-      // Kiểm tra response dựa trên JSON bạn cung cấp
-      if (res.success || (res.data && res.data.id)) {
-        setMessage({ type: 'success', text: `Thêm phòng ${formData.roomNumber} thành công!` });
-        
-        // Reset form (giữ lại mã loại phòng để nhập tiếp phòng khác cùng loại cho nhanh)
-        setFormData(prev => ({ 
-            ...prev, 
-            roomNumber: '', 
-            floor: prev.floor // Giữ lại tầng để nhập tiếp
-        }));
-      }
+      setMessage({ type: 'success', text: 'Cập nhật phòng thành công!' });
+      
+      // Delay chút rồi quay lại danh sách
+      setTimeout(() => {
+         navigate(-1); // Quay lại trang trước
+      }, 1500);
+
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error.response?.data?.message || error.message || "Có lỗi xảy ra khi tạo phòng.";
+      const errorMsg = error.response?.data?.message || error.message || "Lỗi cập nhật.";
       setMessage({ type: 'error', text: errorMsg });
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetching) return <div className="text-center p-10">Đang tải dữ liệu...</div>;
+
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Thêm Phòng Mới</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Chỉnh Sửa Phòng</h2>
         <button 
-            onClick={() => navigate('/rooms')}
+            onClick={() => navigate(-1)}
             className="text-sm text-gray-500 hover:text-gray-700 underline"
         >
             Quay lại
@@ -93,34 +122,28 @@ const CreateRoomPage: React.FC = () => {
           />
         </div>
 
-        {/* Mã Loại Phòng (Room Type Code) */}
+        {/* Mã Loại Phòng (Readonly - Thường không nên sửa loại phòng khi edit, nếu cần thì bỏ disabled) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Mã loại phòng (Room Type Code) <span className="text-red-500">*</span>
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Mã loại phòng</label>
           <input
             type="text"
             name="roomTypeCode"
             value={formData.roomTypeCode}
-            onChange={handleChange}
-            placeholder="Ví dụ: cbac3d8c-3ae0-4ac9..."
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
+            disabled // Khuyên dùng: Không cho sửa loại phòng, muốn đổi loại thì xóa đi tạo lại
+            className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-500 cursor-not-allowed"
           />
-          <p className="text-xs text-gray-500 mt-1">Nhập mã code của loại phòng (Ví dụ: Executive Suite code)</p>
         </div>
 
         {/* Số Phòng */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Số phòng (Room Number) <span className="text-red-500">*</span>
+            Số phòng <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             name="roomNumber"
             value={formData.roomNumber}
             onChange={handleChange}
-            placeholder="Ví dụ: 307"
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             required
           />
@@ -129,7 +152,7 @@ const CreateRoomPage: React.FC = () => {
         {/* Tầng */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Tầng (Floor) <span className="text-red-500">*</span>
+            Tầng <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -142,16 +165,32 @@ const CreateRoomPage: React.FC = () => {
           />
         </div>
 
+        {/* Trạng thái (Mới thêm cho Edit) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Trạng thái</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="AVAILABLE">Sẵn sàng (Available)</option>
+            <option value="OCCUPIED">Đang ở (Occupied)</option>
+            <option value="DIRTY">Chưa dọn (Dirty)</option>
+            <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
+          </select>
+        </div>
+
         <button
           type="submit"
           disabled={loading}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:bg-gray-400"
         >
-          {loading ? 'Đang xử lý...' : 'Thêm phòng'}
+          {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
         </button>
       </form>
     </div>
   );
 };
 
-export default CreateRoomPage;
+export default EditRoomPage;

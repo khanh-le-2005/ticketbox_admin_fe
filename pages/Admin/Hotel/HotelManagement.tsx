@@ -14,7 +14,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 // Dùng link ảnh rỗng base64 an toàn tuyệt đối (không cần mạng) làm fallback cuối cùng
 const FALLBACK_IMAGE = "https://placehold.co/150?text=No+Image";
-
 const IMAGE_BASE_URL = "https://api.momangshow.vn/api/images"; 
 
 const HotelManagement: React.FC = () => {
@@ -25,7 +24,23 @@ const HotelManagement: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // --- FETCH DATA (Giữ nguyên logic cũ của bạn) ---
+  // --- 1. THÊM STATE CHO THÔNG BÁO (TOAST) ---
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | "";
+    msg: string;
+    visible: boolean;
+  }>({ type: "", msg: "", visible: false });
+
+  // --- 2. HÀM HIỂN THỊ THÔNG BÁO ---
+  const showToast = (type: "success" | "error", msg: string) => {
+    setNotification({ type, msg, visible: true });
+    // Tự động tắt sau 3 giây
+    setTimeout(() => {
+        setNotification((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  // --- FETCH DATA ---
   const fetchHotels = async () => {
     setLoading(true);
     try {
@@ -34,7 +49,6 @@ const HotelManagement: React.FC = () => {
       let contentList = [];
       let pageInfo = null;
 
-      // Logic bắt dữ liệu linh hoạt
       if (res?.data?.content) {
           contentList = res.data.content;
           pageInfo = res.data;
@@ -53,7 +67,6 @@ const HotelManagement: React.FC = () => {
       const mappedData = Array.isArray(contentList) ? contentList.map((h: any) => ({
         ...h,
         rating: h.rating || 5.0,
-        // Logic tạo URL ảnh
         avatarUrl: (h.galleryImageIds && h.galleryImageIds.length > 0)
           ? `${IMAGE_BASE_URL}/${h.galleryImageIds[0]}`
           : FALLBACK_IMAGE
@@ -62,6 +75,7 @@ const HotelManagement: React.FC = () => {
       setHotels(mappedData);
     } catch (error) {
       console.error("Lỗi tải danh sách:", error);
+      showToast("error", "Lỗi tải danh sách khách sạn!"); // Báo lỗi đẹp
     } finally {
       setLoading(false);
     }
@@ -71,29 +85,31 @@ const HotelManagement: React.FC = () => {
     fetchHotels();
   }, []);
 
-  // --- HÀM XỬ LÝ LỖI ẢNH (QUAN TRỌNG: NGĂN LOOP) ---
+  // --- HÀM XỬ LÝ LỖI ẢNH ---
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
-    // Kiểm tra: Chỉ gán lại nếu src hiện tại KHÁC ảnh fallback
-    // Điều này ngăn chặn việc gán đi gán lại gây lặp vô tận
     if (target.src !== FALLBACK_IMAGE) {
         target.src = FALLBACK_IMAGE;
     }
   };
 
-  // --- CÁC HANDLER KHÁC GIỮ NGUYÊN ---
   const handleNavigateCreate = () => navigate("/hotels/create");
   const handleNavigateEdit = (id: string) => navigate(`/hotels/edit/${id}`);
 
+  // --- 3. CẬP NHẬT HÀM XÓA (DÙNG TOAST THAY ALERT) ---
   const handleDelete = async (id: string) => {
+    // Giữ window.confirm vì nó chặn luồng để người dùng suy nghĩ (UX chuẩn cho xóa)
     if (window.confirm("Bạn có chắc chắn muốn xóa khách sạn này?")) {
       try {
         await hotelApi.delete(id);
         setHotels(prev => prev.filter((h) => h.id !== id));
-        alert("Đã xóa thành công!");
+        
+        // Thay alert("Đã xóa thành công!") bằng showToast
+        showToast("success", "Đã xóa khách sạn thành công!"); 
       } catch (error) {
         console.error(error);
-        alert("Lỗi khi xóa khách sạn.");
+        // Thay alert("Lỗi...") bằng showToast
+        showToast("error", "Có lỗi xảy ra khi xóa!");
       }
     }
   };
@@ -105,7 +121,42 @@ const HotelManagement: React.FC = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen relative">
+      
+      {/* 🔥🔥🔥 TOAST NOTIFICATION UI (Code mới thêm vào) 🔥🔥🔥 
+          Vị trí fixed: top-6 right-6 để nổi lên trên cùng, không ảnh hưởng layout cũ 
+      */}
+      <div 
+        className={`fixed top-6 right-6 z-50 transition-all duration-500 ease-in-out transform ${
+            notification.visible ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0 pointer-events-none"
+        }`}
+      >
+         <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border-l-8 min-w-[300px] bg-white ${
+            notification.type === 'success' 
+            ? 'border-green-500 text-green-800' 
+            : 'border-red-500 text-red-800'
+         }`}>
+            <div className={`text-2xl ${notification.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                {notification.type === 'success' ? '✔' : '✖'}
+            </div>
+            <div>
+                <h4 className="font-bold text-sm uppercase mb-1">
+                    {notification.type === 'success' ? 'Thành công' : 'Có lỗi xảy ra'}
+                </h4>
+                <p className="text-sm font-medium text-gray-600">{notification.msg}</p>
+            </div>
+            <button 
+                onClick={() => setNotification(prev => ({...prev, visible: false}))}
+                className="ml-auto text-gray-400 hover:text-gray-600 pl-4"
+            >
+                ✕
+            </button>
+         </div>
+      </div>
+      {/* 🔥🔥🔥 END TOAST 🔥🔥🔥 */}
+
+      {/* --- PHẦN GIAO DIỆN CŨ (GIỮ NGUYÊN 100%) --- */}
+
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -160,14 +211,13 @@ const HotelManagement: React.FC = () => {
                       key={hotel.id}
                       className="hover:bg-orange-50/30 transition-colors border-b last:border-0 group"
                     >
-                      {/* --- CỘT HÌNH ẢNH ĐÃ SỬA LỖI --- */}
                       <td className="p-4">
                         <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                           <img
                             src={hotel.avatarUrl}
                             alt={hotel.name}
                             className="w-full h-full object-cover"
-                            onError={handleImageError} // Sử dụng hàm handleImageError mới
+                            onError={handleImageError}
                           />
                         </div>
                       </td>

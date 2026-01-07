@@ -41,7 +41,7 @@ export const showApi = {
   //   }
   // },
 
-    getById: async (id: string) => {
+  getById: async (id: string) => {
     // axiosClient đã xử lý response, nên return luôn kết quả
     return axiosClient.get(`/shows/${id}`);
   },

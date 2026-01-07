@@ -6,10 +6,11 @@ import {
   HiOutlineTrash, 
   HiOutlineRefresh,
   HiOutlineOfficeBuilding,
-  HiOutlineCalendar,
+  HiOutlinePhone, // ✅ Đã thêm icon điện thoại
   HiOutlineCheckCircle,
   HiOutlineBan
 } from 'react-icons/hi';
+// Import interface Company từ file api của bạn
 import { getAllCompanies, deleteCompany, Company } from '../apis/api_company';
 
 const CompanyManagement: React.FC = () => {
@@ -20,24 +21,17 @@ const CompanyManagement: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Gọi API
       const response: any = await getAllCompanies();
       
-      // LOGIC XỬ LÝ DỮ LIỆU API JSON
-      // Kiểm tra cấu trúc { success: true, data: [...] }
       if (response && response.data && Array.isArray(response.data)) {
         setCompanies(response.data);
-      } 
-      // Phòng trường hợp API trả về mảng trực tiếp
-      else if (Array.isArray(response)) {
+      } else if (Array.isArray(response)) {
         setCompanies(response);
-      } 
-      else {
+      } else {
         setCompanies([]);
       }
     } catch (error) {
       console.error('Lỗi khi tải danh sách công ty:', error);
-      // alert('Không thể tải danh sách công ty.'); // Có thể bỏ comment nếu muốn hiện popup lỗi
     } finally {
       setLoading(false);
     }
@@ -51,7 +45,6 @@ const CompanyManagement: React.FC = () => {
     if (window.confirm('Xóa công ty này? Thao tác này có thể ảnh hưởng đến các nhân viên liên quan.')) {
       try {
         await deleteCompany(id);
-        // Cập nhật lại state local để không cần load lại trang
         setCompanies(prev => prev.filter(c => c.id !== id));
         alert('Đã xóa đối tác thành công');
       } catch (error) {
@@ -59,19 +52,6 @@ const CompanyManagement: React.FC = () => {
         alert('Không thể xóa đối tác lúc này.');
       }
     }
-  };
-
-  const getRoleLabel = (role?: string) => {
-    if (role === 'TO_CHUC') return 'Đối tác (Tổ chức)';
-    return role || 'Tổ chức';
-  };
-
-  // Hàm format ngày tháng (VD: 26/12/2025)
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '---';
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric'
-    });
   };
 
   return (
@@ -115,15 +95,17 @@ const CompanyManagement: React.FC = () => {
                 <thead className="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   <tr>
                     <th className="px-6 py-4">Thông tin Công Ty</th>
-                    <th className="px-6 py-4">Liên Hệ</th>
+                    <th className="px-6 py-4">Email</th>
                     <th className="px-6 py-4">Trạng thái</th>
-                    <th className="px-6 py-4">Ngày tạo</th>
+                    {/* 👇 ĐÃ SỬA: Thay Ngày tạo bằng Số điện thoại */}
+                    <th className="px-6 py-4">Số điện thoại</th>
                     <th className="px-6 py-4 text-right">Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {companies.length > 0 ? companies.map(c => (
                     <tr key={c.id} className="hover:bg-gray-50/30 transition-colors">
+                      {/* Cột 1: Thông tin chung */}
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-3">
                             <div className="mt-1">
@@ -140,14 +122,15 @@ const CompanyManagement: React.FC = () => {
                         </div>
                       </td>
                       
+                      {/* Cột 2: Email */}
                       <td className="px-6 py-4">
                         <div className="text-sm">
                             <p className="text-gray-700 font-medium">{c.email}</p>
                         </div>
                       </td>
 
+                      {/* Cột 3: Trạng thái */}
                       <td className="px-6 py-4">
-                        {/* Logic hiển thị Active dựa trên JSON active: true/false */}
                         {c.active ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-[11px] font-bold border border-green-100">
                                 <HiOutlineCheckCircle /> Hoạt động
@@ -159,13 +142,21 @@ const CompanyManagement: React.FC = () => {
                         )}
                       </td>
 
+                      {/* 👇 Cột 4: SỐ ĐIỆN THOẠI (ĐÃ SỬA) */}
                       <td className="px-6 py-4">
-                         <div className="flex items-center gap-1.5 text-gray-500 text-sm">
-                            <HiOutlineCalendar className="text-gray-400"/>
-                            <span className="font-mono text-xs">{formatDate(c.createdAt)}</span>
+                         <div className="flex items-center gap-2 text-gray-500 text-sm">
+                            <HiOutlinePhone className="text-gray-400 shrink-0"/>
+                            {c.phone ? (
+                                <span className="font-mono text-gray-700 font-medium tracking-wide">
+                                    {c.phone}
+                                </span>
+                            ) : (
+                                <span className="text-gray-300 italic text-xs">---</span>
+                            )}
                          </div>
                       </td>
 
+                      {/* Cột 5: Thao tác */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button 
@@ -202,4 +193,4 @@ const CompanyManagement: React.FC = () => {
   );
 };
 
-export default CompanyManagement;
+export default CompanyManagement; 
