@@ -31,6 +31,9 @@ export interface IShow {
   id: string;
   name: string;
   description: string;
+  // Optional fields returned by backend
+  genre?: string;
+  companyId?: string;
   bannerImageId: number | null;
   galleryImageIds: number[];
   address: Address;
@@ -97,10 +100,10 @@ export interface IShowRequest {
     longitude?: number;
   };
   performers: string[];
-  
+
   // 👇 THÊM TRƯỜNG NÀY
-  keepGalleryImageIds?: number[]; 
-  
+  keepGalleryImageIds?: number[];
+
   ticketTypes: {
     code: string; // Có thể rỗng
     name: string;

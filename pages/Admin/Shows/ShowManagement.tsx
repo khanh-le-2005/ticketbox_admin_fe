@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   HiOutlinePlus,
@@ -9,13 +9,14 @@ import {
   HiOutlineRefresh,
   HiOutlineClock,
   HiOutlineLocationMarker,
+  HiOutlineDuplicate, // 1️⃣ Import icon Sao chép
 } from "react-icons/hi";
 
-// 🔥 SỬA IMPORT: Thêm IShow và dùng ngoặc nhọn
 import { IShow } from "@/type";
 import { showApi } from "@/apis";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QueryKey } from "@/util/querykey";
+import { toast } from "react-toastify";
 
 const ShowManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const ShowManagement: React.FC = () => {
       // Lấy thông báo từ Server trả về
       const message = response?.message || "Thao tác thành công!";
 
-      alert(`✅ ${message}`);
+      toast.success(`✅ ${message}`);
 
       // Tự động tải lại danh sách sau khi xóa thành công
       queryClient.invalidateQueries({ queryKey: [QueryKey.getAllShow] });
@@ -73,7 +74,7 @@ const ShowManagement: React.FC = () => {
       // Hiển thị lỗi từ Backend (ví dụ: Không có quyền, show đang diễn ra...)
       const errorMessage =
         error?.response?.data?.message || "Lỗi hệ thống: Không thể xóa show.";
-      alert(`⚠️ THẤT BẠI: ${errorMessage}`);
+      toast.error(`⚠️ THẤT BẠI: ${errorMessage}`);
     }
   };
 
@@ -120,6 +121,15 @@ const ShowManagement: React.FC = () => {
     });
   };
 
+  const handleDuplicate = (show: IShow) => {
+    // Hỏi xác nhận (tuỳ chọn)
+    const confirmCopy = window.confirm(`Bạn muốn tạo bản sao cho show: "${show.name}"?`);
+    if (confirmCopy) {
+      // 🔥 QUAN TRỌNG: Chuyển sang trang ADD nhưng gửi kèm "state" chứa dữ liệu show cũ
+      navigate("/shows/add", { state: { copiedShow: show } });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -132,6 +142,7 @@ const ShowManagement: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+           {/* <RefreshPage onClick={() => fetchShows} loading={loading} /> */}
           <button
             onClick={fetchShows}
             className="p-3 text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"
@@ -197,7 +208,6 @@ const ShowManagement: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-16 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shadow-sm flex-shrink-0 relative">
-                            {/* Xử lý hiển thị ảnh từ bannerImageId */}
                             {show.bannerImageId ? (
                               <img
                                 src={showApi.getImageUrl(show.bannerImageId)}
@@ -222,7 +232,6 @@ const ShowManagement: React.FC = () => {
                             >
                               {show.name}
                             </p>
-                            {/* 🔥 SỬA: Hiển thị tên Organizer theo JSON mới */}
                             <p className="text-[11px] text-gray-500 truncate">
                               {show.organizer?.name ||
                                 show.organizer?.email ||
@@ -266,9 +275,19 @@ const ShowManagement: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Cột 5: Thao tác */}
+                      {/* 3️⃣ Cột 5: Thao tác (Đã thêm nút Sao chép) */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          {/* Nút Sao chép */}
+                          <button
+                            onClick={() => handleDuplicate(show)}
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Sao chép Show này"
+                          >
+                            <HiOutlineDuplicate size={18} />
+                          </button>
+
+                          {/* Nút Sửa */}
                           <button
                             onClick={() => navigate(`/shows/edit/${show.id}`)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -276,6 +295,8 @@ const ShowManagement: React.FC = () => {
                           >
                             <HiOutlinePencil size={18} />
                           </button>
+
+                          {/* Nút Xóa */}
                           <button
                             onClick={() => handleDelete(show.id)}
                             className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"

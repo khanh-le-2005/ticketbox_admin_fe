@@ -11,8 +11,8 @@ import {
   HiOutlineIdentification,
   HiOutlineChevronDown,
 } from "react-icons/hi";
-// Import từ file api đã cập nhật
 import { createStaff, getStaffById, updateStaff } from "../apis/api_staff";
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 const AddStaff: React.FC = () => {
   const navigate = useNavigate();
@@ -50,10 +50,8 @@ const AddStaff: React.FC = () => {
           });
         } catch (error) {
           console.error("Lỗi khi tải dữ liệu nhân viên:", error);
-          alert(
-            "Không thể tải thông tin nhân viên (ID không tồn tại hoặc lỗi mạng)."
-          );
-          navigate("/users/staff"); // Quay về danh sách nếu lỗi
+          toast.error("Không thể tải thông tin nhân viên (ID không tồn tại hoặc lỗi mạng)."); // Thay alert
+          navigate("/users/staff");
         } finally {
           setFetching(false);
         }
@@ -67,22 +65,22 @@ const AddStaff: React.FC = () => {
 
     // 1. VALIDATION CƠ BẢN
     if (!formData.username || !formData.fullName) {
-      alert("Vui lòng nhập đầy đủ: Tên đăng nhập và Họ tên.");
+      toast.error("Vui lòng nhập đầy đủ: Tên đăng nhập và Họ tên."); // Thay alert
       return;
     }
 
-    // 2. VALIDATION PHONE (Cho phép rỗng, nhưng nếu nhập phải đúng format)
+    // 2. VALIDATION PHONE
     if (formData.phone && formData.phone.trim() !== "") {
       const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
       if (!phoneRegex.test(formData.phone)) {
-        alert("⚠️ Số điện thoại không hợp lệ! (VD: 0987654321)");
+        toast.error("⚠️ Số điện thoại không hợp lệ! (VD: 0987654321)"); // Thay alert
         return;
       }
     }
 
     // 3. CHECK PASSWORD
     if (formData.password && formData.password !== formData.confirmPassword) {
-      alert("⚠️ Mật khẩu xác nhận không khớp!");
+      toast.error("⚠️ Mật khẩu xác nhận không khớp!"); // Thay alert
       return;
     }
 
@@ -93,7 +91,7 @@ const AddStaff: React.FC = () => {
         username: formData.username,
         email: formData.email,
         role: formData.role,
-        phone: formData.phone, // API sẽ nhận chuỗi rỗng nếu user không nhập
+        phone: formData.phone,
         password: formData.password,
       };
 
@@ -101,22 +99,21 @@ const AddStaff: React.FC = () => {
         apiPayload.phone = formData.phone.trim();
       }
 
-      // ✅ CHỈ GỬI PASSWORD KHI USER NHẬP
       if (formData.password) {
         apiPayload.password = formData.password;
       }
 
       if (isEditMode && id) {
-        // Update: Bỏ password khỏi payload nếu user không nhập mới
+        // Update
         const updatePayload = { ...apiPayload };
         if (!updatePayload.password) delete (updatePayload as any).password;
 
         await updateStaff(id, updatePayload);
-        alert(`✅ Cập nhật thành công: ${formData.fullName}`);
+        toast.success(`✅ Cập nhật thành công: ${formData.fullName}`); // Thay alert
       } else {
         // Create
         await createStaff(apiPayload);
-        alert(`✅ Tạo mới thành công: ${formData.fullName}`);
+        toast.success(`✅ Tạo mới thành công: ${formData.fullName}`); // Thay alert
       }
 
       navigate("/users/staff");
@@ -124,10 +121,9 @@ const AddStaff: React.FC = () => {
       console.error("Lỗi Submit:", error);
 
       const serverData = error.response?.data;
-      const message =
-        serverData?.message || error.message || "Lỗi không xác định";
+      const message = serverData?.message || error.message || "Lỗi không xác định";
 
-      alert(`❌ Thất bại: ${message}`);
+      toast.error(`❌ Thất bại: ${message}`); // Thay alert
     } finally {
       setLoading(false);
     }
@@ -188,7 +184,7 @@ const AddStaff: React.FC = () => {
                 placeholder="username123"
                 value={formData.username}
                 onChange={handleInputChange}
-                readOnly={isEditMode} // Thường username không cho sửa
+                readOnly={isEditMode}
               />
             </div>
 
@@ -257,8 +253,6 @@ const AddStaff: React.FC = () => {
               >
                 <option value="VAN_HANH">Nhân viên Vận hành (VAN_HANH)</option>
                 <option value="QUET_VE">Nhân viên Quét vé (QUET_VE)</option>
-                {/* Đã thêm option TO_CHUC dựa trên JSON trả về */}
-                {/* <option value="TO_CHUC">Ban Tổ Chức (TO_CHUC)</option> */}
               </select>
               <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <HiOutlineChevronDown size={20} />

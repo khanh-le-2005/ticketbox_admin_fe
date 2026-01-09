@@ -12,6 +12,7 @@ import {
   HiOutlineCurrencyDollar,
   HiOutlineCalendar
 } from 'react-icons/hi';
+import { toast } from 'react-toastify'; // 👈 Import Toast
 // 👇 Đảm bảo import searchCustomers từ file api
 import { getAllCustomers, deleteCustomer, searchCustomers, Customer } from '../apis/api_user';
 
@@ -60,10 +61,10 @@ const CustomerManagement: React.FC = () => {
         await deleteCustomer(id);
         // Xóa xong thì load lại dữ liệu hiện tại
         fetchData(searchTerm);
-        alert('Đã xóa khách hàng thành công');
+        toast.success('Đã xóa khách hàng thành công'); // Thay alert success
       } catch (error) {
         console.error(error);
-        alert('Không thể xóa khách hàng lúc này.');
+        toast.error('Không thể xóa khách hàng lúc này.'); // Thay alert error
       }
     }
   };

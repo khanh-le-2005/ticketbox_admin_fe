@@ -10,94 +10,32 @@ import {
   HiOutlinePhone,
   HiOutlineUser
 } from 'react-icons/hi';
-import axios from 'axios'; 
+// 👇 Import axiosClient và API function
+import { getCustomerDetailWithHistory, CustomerDetailData } from '@/apis/api_user';
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
-// --- 1. ĐỊNH NGHĨA TYPE DỰA TRÊN JSON BẠN GỬI ---
-
-interface CustomerInfo {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    membershipLevel: string | null;
-    totalSpent: number;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface BookingItem {
-    id: string;
-    requestId?: string;
-    showId?: string;
-    showName?: string;      // Tên show (cho vé)
-    hotelName?: string;     // Tên khách sạn (cho phòng - giả định)
-    totalAmount: number;
-    status: string;
-    createdAt: string;
-    // Field tự thêm ở Frontend để phân loại
-    type: 'TICKET' | 'ROOM'; 
-}
-
-interface ApiHistoryResponse {
-    success: boolean;
-    message: string;
-    data: {
-        customerInfo: CustomerInfo;
-        showBookings: Omit<BookingItem, 'type'>[];
-        hotelBookings: Omit<BookingItem, 'type'>[];
-    };
-}
+// ... (Giữ lại các interface nếu chưa có trong api_user, hoặc import từ đó)
 
 const CustomerDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const [customer, setCustomer] = useState<CustomerInfo | null>(null);
-  const [history, setHistory] = useState<BookingItem[]>([]);
+  const [data, setData] = useState<CustomerDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'tickets' | 'rooms'>('tickets');
 
-  // --- 2. GỌI API ---
+  // --- GỌI API ---
   useEffect(() => {
     if (!id) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('adminToken') || localStorage.getItem('jwtToken');
-        
-        // URL API thực tế
-        const url = `https://api.momangshow.vn/api/customers/${id}/history`;
-        
-        const response = await axios.get<ApiHistoryResponse>(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const result = response.data;
-
-        if (result.success && result.data) {
-            // 1. Set thông tin khách hàng
-            setCustomer(result.data.customerInfo);
-
-            // 2. Gộp danh sách Booking và đánh dấu loại
-            const showList = result.data.showBookings.map(item => ({
-                ...item,
-                type: 'TICKET' as const
-            }));
-
-            const hotelList = result.data.hotelBookings.map(item => ({
-                ...item,
-                type: 'ROOM' as const
-            }));
-
-            // Gộp lại thành 1 mảng history chung để dễ quản lý
-            setHistory([...showList, ...hotelList]);
-        }
-
+        const result = await getCustomerDetailWithHistory(id);
+        setData(result);
       } catch (error) {
         console.error("Lỗi tải dữ liệu:", error);
+        toast.error("Không thể tải thông tin chi tiết khách hàng."); // 👈 Thêm Toast báo lỗi
       } finally {
         setLoading(false);
       }
@@ -106,7 +44,11 @@ const CustomerDetail: React.FC = () => {
     fetchData();
   }, [id]);
 
-  // --- HELPERS ---
+  // Helper tính tổng chi tiêu
+  const totalSpent = data 
+    ? [...data.tickets, ...data.rooms].reduce((sum, item) => sum + (item.totalAmount || 0), 0)
+    : 0;
+
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
@@ -120,22 +62,11 @@ const CustomerDetail: React.FC = () => {
 
   const getStatusStyle = (status: string = '') => {
     const s = status ? status.toUpperCase() : '';
-    switch (s) {
-        case 'CONFIRMED':
-        case 'PAID': 
-        case 'SUCCESS': return 'bg-green-100 text-green-700 border-green-200';
-        case 'PENDING': 
-        case 'PENDING_PAYMENT': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-        case 'CANCELLED': 
-        case 'FAILED': return 'bg-red-100 text-red-700 border-red-200';
-        default: return 'bg-gray-100 text-gray-600 border-gray-200';
-    }
+    if (s === 'CONFIRMED' || s === 'PAID' || s === 'SUCCESS') return 'bg-green-100 text-green-700 border-green-200';
+    if (s === 'PENDING' || s === 'PENDING_PAYMENT') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    if (s === 'CANCELLED' || s === 'FAILED') return 'bg-red-100 text-red-700 border-red-200';
+    return 'bg-gray-100 text-gray-600 border-gray-200';
   };
-
-  // Lọc dữ liệu hiển thị theo Tab
-  const filteredData = history.filter(item => 
-      activeTab === 'tickets' ? item.type === 'TICKET' : item.type === 'ROOM'
-  );
 
   if (loading) {
     return (
@@ -146,7 +77,10 @@ const CustomerDetail: React.FC = () => {
     );
   }
 
-  if (!customer) return <div className="text-center py-20">Không tìm thấy thông tin khách hàng.</div>;
+  if (!data || !data.info) return <div className="text-center py-20 text-gray-500">Không tìm thấy thông tin khách hàng.</div>;
+
+  const { info: customer, tickets, rooms } = data;
+  const filteredData = activeTab === 'tickets' ? tickets : rooms;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -196,7 +130,7 @@ const CustomerDetail: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3 text-gray-600">
                          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><HiOutlinePhone size={18} /></div>
-                        <span className="font-mono font-medium">{customer.phone}</span>
+                        <span className="font-mono font-medium">{customer.phone || '---'}</span>
                     </div>
                 </div>
 
@@ -207,7 +141,7 @@ const CustomerDetail: React.FC = () => {
                     </div>
                      <div className="flex items-center gap-3">
                          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500"><HiOutlineCurrencyDollar size={18} /></div>
-                        <span className="font-bold text-emerald-700 text-lg">{formatCurrency(customer.totalSpent)}</span>
+                        <span className="font-bold text-emerald-700 text-lg">{formatCurrency(totalSpent)}</span>
                         <span className="text-xs text-gray-400 uppercase font-bold mt-1">Tổng chi tiêu</span>
                     </div>
                 </div>
@@ -220,10 +154,10 @@ const CustomerDetail: React.FC = () => {
           {/* Tab Navigation */}
           <div className="flex border-b border-gray-100">
               <button onClick={() => setActiveTab('tickets')} className={`flex-1 py-4 font-bold text-sm uppercase transition-colors ${activeTab === 'tickets' ? 'text-pink-600 border-b-2 border-pink-500 bg-pink-50/10' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
-                  Lịch sử Vé Show ({history.filter(h => h.type === 'TICKET').length})
+                  Lịch sử Vé Show ({tickets.length})
               </button>
               <button onClick={() => setActiveTab('rooms')} className={`flex-1 py-4 font-bold text-sm uppercase transition-colors ${activeTab === 'rooms' ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50/10' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
-                  Lịch sử Khách sạn ({history.filter(h => h.type === 'ROOM').length})
+                  Lịch sử Khách sạn ({rooms.length})
               </button>
           </div>
 
@@ -239,8 +173,8 @@ const CustomerDetail: React.FC = () => {
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                     {filteredData.length > 0 ? filteredData.map((item) => (
-                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                     {filteredData.length > 0 ? filteredData.map((item, idx) => (
+                         <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                              <td className="px-6 py-4">
                                  <span className="font-mono text-sm font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">
                                      #{item.id.slice(-6).toUpperCase()}

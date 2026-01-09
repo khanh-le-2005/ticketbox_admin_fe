@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Send, X, FileText, Settings, Tag, MessageSquare, Image, Upload, Loader2, Link as LinkIcon } from 'lucide-react';
-// Thêm useParams để lấy ID từ URL
 import { useNavigate, useParams } from 'react-router-dom';
 
 // Import thư viện Draft.js
@@ -10,9 +9,10 @@ import draftToHtml from 'draftjs-to-html';
 import htmlToDraft from 'html-to-draftjs';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
-// Import API: Thêm getArticleById và updateArticle
+// Import API
 import { createArticle, updateArticle, getArticleById, Article, ArticleStatus } from '../apis/api_article'; 
 import { uploadImageFile, getImageUrl } from '../apis/api_image'; 
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 // =================================================================
 // 1. UTILS & TYPES
@@ -46,11 +46,9 @@ const getEditorStateFromHtml = (html: string): EditorState => {
 // 2. SUB-COMPONENTS
 // =================================================================
 
-// Editor Component (Đã tối ưu để nhận value thay đổi từ cha)
 const CustomRichTextEditor: React.FC<{ value: string; onChange: (content: string) => void }> = ({ value, onChange }) => {
     const [editorState, setEditorState] = useState(() => getEditorStateFromHtml(value));
 
-    // Effect này quan trọng: Khi dữ liệu bài viết cũ được tải về, Editor cần update nội dung
     useEffect(() => {
         setEditorState(getEditorStateFromHtml(value));
     }, [value]);
@@ -72,6 +70,7 @@ const CustomRichTextEditor: React.FC<{ value: string; onChange: (content: string
                     return { data: { link: imageUrl } };
                 } catch (error) {
                     console.error('Editor Upload Error:', error);
+                    toast.error('Lỗi khi tải ảnh lên Editor.'); // Thay alert
                     throw error;
                 }
             },
@@ -107,7 +106,7 @@ const ImageThumbUploader: React.FC<{ url: string; onChange: (url: string) => voi
                 const imageUrl = getImageUrl(imageId);
                 onChange(imageUrl); 
             } catch (error) {
-                alert('Lỗi tải ảnh lên.');
+                toast.error('Lỗi tải ảnh Thumbnail lên.'); // Thay alert
             } finally {
                 setUploading(false);
             }
@@ -198,8 +197,8 @@ const InputGroup: React.FC<{
 
 export const AddNewArticle: React.FC = () => {
   const navigate = useNavigate(); 
-  const { id } = useParams<{ id: string }>(); // Lấy ID từ URL
-  const isEditMode = !!id; // Kiểm tra xem đang ở chế độ sửa hay thêm
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
 
   const [status, setStatus] = useState<ArticleStatus>('DRAFT'); 
   const [loading, setLoading] = useState(false); 
@@ -215,7 +214,6 @@ export const AddNewArticle: React.FC = () => {
     thumbUrl: '',
   });
 
-  // 🔥 EFFECT MỚI: Tải dữ liệu bài viết cũ nếu đang ở chế độ Sửa
   useEffect(() => {
     if (isEditMode && id) {
         const fetchArticleData = async () => {
@@ -232,10 +230,10 @@ export const AddNewArticle: React.FC = () => {
                     thumbUrl: data.thumbUrl,
                     slug: data.slug
                 });
-                setStatus(data.status); // Set lại trạng thái cũ
+                setStatus(data.status);
             } catch (error) {
                 console.error("Lỗi tải bài viết:", error);
-                alert("Không tìm thấy bài viết hoặc lỗi kết nối.");
+                toast.error("Không tìm thấy bài viết hoặc lỗi kết nối."); // Thay alert
                 navigate('/admin/news');
             } finally {
                 setLoading(false);
@@ -249,7 +247,7 @@ export const AddNewArticle: React.FC = () => {
     const { name, value } = e.target;
     setArticle(prev => {
         const newState = { ...prev, [name]: value };
-        if (name === 'title' && !isEditMode) { // Chỉ tự động tạo slug khi thêm mới
+        if (name === 'title' && !isEditMode) {
             newState.slug = generateSlug(value);
             if (!prev.seoTitle) newState.seoTitle = value;
         }
@@ -271,7 +269,7 @@ export const AddNewArticle: React.FC = () => {
 
   const handleSubmit = async (targetStatus: ArticleStatus) => {
     if (!article.title || !article.content) {
-        alert('Vui lòng điền Tiêu đề và Nội dung bài viết.');
+        toast.error('Vui lòng điền Tiêu đề và Nội dung bài viết.'); // Thay alert
         return;
     }
     
@@ -279,31 +277,28 @@ export const AddNewArticle: React.FC = () => {
     
     const articleData: Article = {
         ...article,
-        id: isEditMode && id ? parseInt(id) : 0, // ID cần cho update
+        id: isEditMode && id ? parseInt(id) : 0,
         createdAt: new Date().toISOString(),
         status: targetStatus,
     };
     
     try {
         if (isEditMode && id) {
-            // Logic CẬP NHẬT
             await updateArticle(id, articleData);
-            alert(`Đã cập nhật bài viết thành công!`);
+            toast.success(`Đã cập nhật bài viết thành công!`); // Thay alert
         } else {
-            // Logic TẠO MỚI
             await createArticle(articleData); 
-            alert(`Đã tạo bài viết mới thành công!`);
+            toast.success(`Đã tạo bài viết mới thành công!`); // Thay alert
         }
         navigate('/admin/news'); 
     } catch (error) {
-        alert('Lỗi khi lưu dữ liệu.');
+        toast.error('Lỗi khi lưu dữ liệu. Vui lòng kiểm tra lại.'); // Thay alert
         console.error('API Error:', error);
     } finally {
         setLoading(false);
     }
   };
 
-  // 🔥 SỬA LỖI: Thêm setTimeout để fix lỗi 'Can't call setState'
   const handleCancel = () => {
     if (window.confirm("Bạn có chắc chắn muốn hủy bỏ? Mọi thay đổi sẽ bị mất.")) {
         setTimeout(() => {
@@ -341,7 +336,6 @@ export const AddNewArticle: React.FC = () => {
             <button 
                 onClick={() => handleSubmit('PUBLISHED')}
                 disabled={loading}
-                // Sửa: text-black -> text-white để nổi trên nền hồng
                 className="bg-brand-pink text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-pink-600 transition-colors shadow-sm disabled:opacity-50"
             >
                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />} Xuất Bản
@@ -352,10 +346,9 @@ export const AddNewArticle: React.FC = () => {
       {/* Form Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Main Content Column (2/3 width) */}
+        {/* Main Content Column */}
         <div className="lg:col-span-2 space-y-6">
             
-            {/* Basic Info Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4">
                     <FileText className="w-5 h-5 text-brand-pink" />
@@ -383,7 +376,6 @@ export const AddNewArticle: React.FC = () => {
                 />
             </div>
 
-            {/* Content Editor Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4">
                     <FileText className="w-5 h-5 text-brand-pink" />
@@ -398,10 +390,9 @@ export const AddNewArticle: React.FC = () => {
 
         </div>
 
-        {/* Sidebar Column (1/3 width) */}
+        {/* Sidebar Column */}
         <div className="lg:col-span-1 space-y-6">
            
-            {/* Featured Image Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4">
                     <Image className="w-5 h-5 text-brand-pink" />
@@ -413,7 +404,6 @@ export const AddNewArticle: React.FC = () => {
                 />
             </div>
             
-            {/* Tags & Meta Info Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4">
                     <Tag className="w-5 h-5 text-brand-pink" />
@@ -448,7 +438,6 @@ export const AddNewArticle: React.FC = () => {
                 </div>
             </div>
             
-            {/* SEO Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4">
                     <Settings className="w-5 h-5 text-brand-pink" />

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi';
 // Import interface Company từ file api của bạn
 import { getAllCompanies, deleteCompany, Company } from '../apis/api_company';
+import { toast } from 'react-toastify';
 
 const CompanyManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -46,10 +47,10 @@ const CompanyManagement: React.FC = () => {
       try {
         await deleteCompany(id);
         setCompanies(prev => prev.filter(c => c.id !== id));
-        alert('Đã xóa đối tác thành công');
+        toast.success('Đã xóa đối tác thành công');
       } catch (error) {
         console.error(error);
-        alert('Không thể xóa đối tác lúc này.');
+        toast.error('Không thể xóa đối tác lúc này.');
       }
     }
   };

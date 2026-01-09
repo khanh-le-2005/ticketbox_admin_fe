@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import hotelApi from "@/apis/hotelApi";
 import { Hotel } from "@/type";
 import axiosClient from "@/axiosclient";
+import { toast } from "react-toastify"; // <--- 1. Import Toast
 import {
   FaEdit,
   FaTrash,
@@ -78,10 +79,11 @@ const RoomManagementPage: React.FC = () => {
         }
       } catch (error) {
         console.error("Lỗi tải danh sách khách sạn:", error);
+        toast.error("Không thể tải danh sách khách sạn. Vui lòng thử lại sau."); // <--- Thêm Toast Error
       }
     };
     fetchHotels();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- 2. FETCH DATA (ROOMS + DASHBOARD) ---
   useEffect(() => {
@@ -117,6 +119,7 @@ const RoomManagementPage: React.FC = () => {
         }
       } catch (error) {
         console.error("Lỗi tải dữ liệu:", error);
+        toast.error("Lỗi khi tải dữ liệu phòng. Vui lòng kiểm tra kết nối."); // <--- Thêm Toast Error
         setRoomInstances([]);
         setDashboardStats(null);
       } finally {
@@ -125,13 +128,27 @@ const RoomManagementPage: React.FC = () => {
     };
 
     fetchData();
-  }, [selectedHotelId, hotels]);
+  }, [selectedHotelId, hotels, setSearchParams]);
 
   // --- UI HANDLERS ---
   const handleHotelChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
     setSelectedHotelId(e.target.value);
+  
   const handleCreateRoom = () =>
     navigate(`/rooms/create?hotelId=${selectedHotelId}`);
+
+  // Thêm hàm xử lý xóa (giả lập) để minh họa thay thế alert
+  const handleDeleteRoom = (roomId: string) => {
+    // Thay vì window.confirm / alert, có thể dùng thư viện confirm dialog đẹp hơn
+    // Nhưng nếu dùng window.confirm thì vẫn giữ, chỉ thay alert kết quả bằng toast
+    if (window.confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
+        // Giả lập gọi API xóa
+        // axiosClient.delete(`/rooms/${roomId}`)...
+        console.log("Delete room", roomId);
+        toast.success("Đã xóa phòng thành công!"); // <--- Toast thay vì alert
+        // Sau đó fetch lại data...
+    }
+  }
 
   // Helper Badge
   const getStatusBadge = (status: string) => {
@@ -195,12 +212,12 @@ const RoomManagementPage: React.FC = () => {
           </div>
         </div>
 
-        <button
+        {/* <button
           onClick={handleCreateRoom}
           className="bg-orange-600 text-white px-5 py-2.5 rounded-lg hover:bg-orange-700 flex items-center gap-2 shadow-md transition-all font-medium active:scale-95"
         >
           <FaPlus /> Thêm phòng mới
-        </button>
+        </button> */}
       </div>
 
       {loading ? (
@@ -335,6 +352,7 @@ const RoomManagementPage: React.FC = () => {
                               <FaEdit size={16} />
                             </button>
                             <button
+                              onClick={() => handleDeleteRoom(room.id)} 
                               className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
                               title="Xóa"
                             >

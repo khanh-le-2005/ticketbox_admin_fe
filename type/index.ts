@@ -67,3 +67,37 @@ export interface RoomInstancePayload {
   roomNumber: string;
   floor: number;
 }
+
+
+
+export interface RoomType {
+  code?: string;
+  name: string;
+  totalRooms: number;
+  
+  // Các trường mới
+  standardCapacity: number;
+  maxCapacity: number;
+  surchargePerPerson: number;
+  priceWeekday: number;
+  priceFriday: number;
+  priceSaturday: number;
+  priceSunday: number;
+}
+
+export interface Hotel {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+  galleryImageIds: number[];
+  
+  // Các trường giá do BE tính toán trả về
+  minPrice: number;
+  maxPrice: number;
+  totalRoomTypes: number;
+  
+  roomTypes: RoomType[];
+  rating?: number;
+  avatarUrl?: string; // Field phụ do FE tự map thêm
+}

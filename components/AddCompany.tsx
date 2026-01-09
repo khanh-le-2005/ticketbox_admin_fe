@@ -11,6 +11,7 @@ import {
   HiOutlinePhone
 } from 'react-icons/hi';
 import { createCompany, getCompanyById, updateCompany } from '../apis/api_company';
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 const AddCompany: React.FC = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const AddCompany: React.FC = () => {
           });
         } catch (error) {
           console.error('Lỗi khi tải dữ liệu đối tác:', error);
-          alert('Không thể tải dữ liệu đối tác.');
+          toast.error('Không thể tải dữ liệu đối tác.'); // Thay alert
         } finally {
           setFetching(false);
         }
@@ -57,7 +58,7 @@ const AddCompany: React.FC = () => {
     
     if (!formData.fullName || !formData.username || !formData.email || 
         !formData.phone || (!isEditMode && !formData.password)) {
-      alert('Vui lòng nhập đầy đủ thông tin bắt buộc.');
+      toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc.'); // Thay alert
       return;
     }
 
@@ -75,10 +76,10 @@ const AddCompany: React.FC = () => {
 
       if (isEditMode && id) {
         await updateCompany(id, payload);
-        alert('Cập nhật thông tin đối tác thành công!');
+        toast.success('Cập nhật thông tin đối tác thành công!'); // Thay alert
       } else {
         await createCompany(payload);
-        alert('Đã thêm đối tác công ty thành công!');
+        toast.success('Đã thêm đối tác công ty thành công!'); // Thay alert
       }
       
       // Quay lại tab đối tác
@@ -90,13 +91,13 @@ const AddCompany: React.FC = () => {
       const serverMessage = error.response?.data?.message || "";
 
       if (serverMessage.includes("Email") && serverMessage.includes("đã được sử dụng")) {
-        alert("⚠️ CẢNH BÁO: Email này đã tồn tại trong hệ thống!\n\nVui lòng sử dụng một địa chỉ Email khác.");
+        toast.error("⚠️ CẢNH BÁO: Email này đã tồn tại trong hệ thống! Vui lòng sử dụng một địa chỉ Email khác.");
       } else if (serverMessage.includes("Username") || serverMessage.includes("Tên đăng nhập")) {
-        alert("⚠️ CẢNH BÁO: Tên đăng nhập đã có người dùng.\n\nVui lòng chọn tên đăng nhập khác.");
+        toast.error("⚠️ CẢNH BÁO: Tên đăng nhập đã có người dùng. Vui lòng chọn tên đăng nhập khác.");
       } else if (serverMessage.includes("Phone") || serverMessage.includes("Số điện thoại")) {
-        alert("⚠️ CẢNH BÁO: Số điện thoại đã được sử dụng.\n\nVui lòng sử dụng số điện thoại khác.");
+        toast.error("⚠️ CẢNH BÁO: Số điện thoại đã được sử dụng. Vui lòng sử dụng số điện thoại khác.");
       } else {
-        alert(`Lỗi hệ thống: ${serverMessage || 'Không thể lưu thông tin. Vui lòng thử lại.'}`);
+        toast.error(`Lỗi hệ thống: ${serverMessage || 'Không thể lưu thông tin. Vui lòng thử lại.'}`);
       }
     } finally {
       setLoading(false);

@@ -9,15 +9,15 @@ import {
   HiOutlineEye,
   HiOutlineEyeOff,
   HiOutlineRefresh,
-  HiOutlineCollection // Icon cho Menu
+  HiOutlineCollection
 } from 'react-icons/hi';
+import { toast } from 'react-toastify'; // 👈 Import Toastify
 
 // SỬA: Import từ file api_banner-new.ts
 import {
   getAllBanners,
   deleteBanner,
-  updateBanner, // Dùng cái này để thay thế toggle status nếu file mới không có hàm riêng
-  toggleBannerStatus,
+  toggleBannerStatus, // Đảm bảo đã export hàm này bên api_banner-new
   Banner
 } from '../apis/api_banner-new'; 
 
@@ -30,10 +30,10 @@ const BannerManagement: React.FC = () => {
     setLoading(true);
     try {
       const data = await getAllBanners();
-      // Đảm bảo dữ liệu là mảng trước khi set
       setBanners(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Lỗi khi tải banners:', error);
+      toast.error('Không thể tải danh sách Banner.'); // Toast error
     } finally {
       setLoading(false);
     }
@@ -48,26 +48,31 @@ const BannerManagement: React.FC = () => {
       try {
         await deleteBanner(id);
         setBanners(banners.filter(b => b.id !== id));
-        alert('Đã xóa banner thành công');
+        toast.success('Đã xóa banner thành công!'); // Toast Success
       } catch (error) {
-        alert('Không thể xóa banner lúc này.');
+        console.error(error);
+        toast.error('Không thể xóa banner lúc này.'); // Toast Error
       }
     }
   };
 
   // Cập nhật trạng thái Ẩn/Hiện nhanh
-const handleToggleStatus = async (banner: Banner) => {
+  const handleToggleStatus = async (banner: Banner) => {
     if (!banner.id) return;
     try {
-        // Gọi hàm toggle mới, truyền cả object banner vào
+        // Gọi API cập nhật trạng thái
+        // Lưu ý: Đảm bảo api toggleBannerStatus được viết đúng bên file api
         await toggleBannerStatus(banner.id, banner);
         
         // Cập nhật State
         setBanners(prev => prev.map(b => b.id === banner.id ? { ...b, isActive: !b.isActive } : b));
+        
+        toast.success(`Đã ${!banner.isActive ? 'hiện' : 'ẩn'} banner thành công!`); // Toast
     } catch (error) {
-        alert('Không thể cập nhật trạng thái.');
+        console.error(error);
+        toast.error('Lỗi: Không thể cập nhật trạng thái.'); // Toast
     }
-};
+  };
 
   return (
     <div className="space-y-6">
@@ -138,7 +143,6 @@ const handleToggleStatus = async (banner: Banner) => {
                         <span className="truncate max-w-[150px]">{banner.link}</span>
                       </a>
                     </td>
-                    {/* CỘT MENU MỚI THÊM VÀO */}
                     <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 text-gray-600">
                             <HiOutlineCollection size={16} className="text-gray-400" />
@@ -152,7 +156,7 @@ const handleToggleStatus = async (banner: Banner) => {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => banner.id && handleToggleStatus(banner.id, banner.isActive)}
+                        onClick={() => handleToggleStatus(banner)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${banner.isActive
                             ? 'bg-emerald-50 text-emerald-600 shadow-sm shadow-emerald-100'
                             : 'bg-gray-100 text-gray-400'

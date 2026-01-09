@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch, HiOutlinePhotograph, HiOutlineRefresh } from 'react-icons/hi';
 // IMPORT API THẬT
 import { getAllArticles, deleteArticle, Article } from '../apis/api_article';
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 const NewsManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const NewsManagement: React.FC = () => {
       setNews(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Lỗi khi tải tin tức:', error);
-      alert('Không thể kết nối với máy chủ tin tức.');
+      toast.error('Không thể kết nối với máy chủ tin tức.'); // Thay alert
     } finally {
       setLoading(false);
     }
@@ -35,9 +36,9 @@ const NewsManagement: React.FC = () => {
       try {
         await deleteArticle(id);
         setNews(prev => prev.filter(item => item.id !== id));
-        alert('Đã xóa bài viết thành công!');
+        toast.success('Đã xóa bài viết thành công!'); // Thay alert success
       } catch (error) {
-        alert('Lỗi khi xóa bài viết.');
+        toast.error('Lỗi khi xóa bài viết.'); // Thay alert error
       }
     }
   };

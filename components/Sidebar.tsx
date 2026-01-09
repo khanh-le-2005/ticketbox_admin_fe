@@ -1,43 +1,90 @@
-import React from "react";
+import React, { useState } from "react";
 import { GiPodium } from "react-icons/gi";
-import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
-import { NavLink, useNavigate } from "react-router-dom";
+import { MdLogin } from "react-icons/md";
 import {
   HiOutlineViewGrid,
   HiOutlineNewspaper,
   HiOutlinePhotograph,
-  HiOutlineCog,
   HiOutlineLogout,
   HiOutlineUser,
   HiOutlineTicket,
   HiOutlineUsers,
-  HiOutlineOfficeBuilding,
-  HiOutlineUserGroup,
 } from "react-icons/hi";
 import { FaHotel } from "react-icons/fa";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
+interface MenuItem {
+  label: string;
+  path?: string;
+  icon: React.ReactNode;
+  children?: {
+    label: string;
+    path: string;
+  }[];
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
 
-  const menuItems = [
-    { label: "Tổng quan", path: "/dashboard", icon: <HiOutlineViewGrid size={22} /> },
-    { label: "Quản lý Show", path: "/shows", icon: <HiOutlineTicket size={22} /> },
-    { label: "Quản lý Phòng", path: "/rooms", icon: <HiOutlineTicket size={22} /> },
-    { label: "Quản lý Khách sạn", path: "/hotels", icon: <FaHotel size={22} /> },
-    { label: "Đối tác & Tổ chức", path: "/users/companies", icon: <HiOutlineOfficeBuilding size={22} /> },
-    { label: "Nhân viên hệ thống", path: "/users/staff", icon: <HiOutlineUserGroup size={22} /> },
-    { label: "Khách hàng", path: "/users/customers", icon: <HiOutlineUsers size={22} /> },
-    { label: "Quản lý Tin tức", path: "/news", icon: <HiOutlineNewspaper size={22} /> },
-    { label: "Quản lý Banner", path: "/banners", icon: <HiOutlinePhotograph size={22} /> },
-    // { label: "Cấu hình hệ thống", path: "/config", icon: <HiOutlineCog size={22} /> },
-    { label: "quản lý sân khấu", path: "/stage", icon: <GiPodium size={22} />},
-    { label: "CheckAction", path: "/CheckAction", icon: <GiPodium size={22} />},
+  const toggleMenu = (label: string) => {
+    setOpenMenus((prev) =>
+      prev.includes(label)
+        ? prev.filter((l) => l !== label)
+        : [...prev, label]
+    );
+  };
+
+  const menuItems: MenuItem[] = [
+    {
+      label: "Tổng quan",
+      path: "/dashboard",
+      icon: <HiOutlineViewGrid size={22} />,
+    },
+    {
+      label: "Quản lý Show",
+      path: "/shows",
+      icon: <HiOutlineTicket size={22} />,
+    },
+    {
+      label: "Quản lý khách sạn",
+      icon: <FaHotel size={22} />,
+      children: [
+        { label: "Danh sách khách sạn", path: "/hotels" },
+        { label: "Quản lý phòng", path: "/rooms" },
+        { label: "Check-in / Check-out", path: "/CheckAction" },
+      ],
+    },
+    {
+      label: "Người dùng",
+      icon: <HiOutlineUsers size={22} />,
+      children: [
+        { label: "Đối tác & Tổ chức", path: "/users/companies" },
+        { label: "Nhân viên hệ thống", path: "/users/staff" },
+        { label: "Khách hàng", path: "/users/customers" },
+      ],
+    },
+    {
+      label: "Quản lý Tin tức",
+      path: "/news",
+      icon: <HiOutlineNewspaper size={22} />,
+    },
+    {
+      label: "Quản lý Banner",
+      path: "/banners",
+      icon: <HiOutlinePhotograph size={22} />,
+    },
+    {
+      label: "Quản lý sân khấu",
+      path: "/stage",
+      icon: <GiPodium size={22} />,
+    },
   ];
 
   const handleLogout = () => {
@@ -67,23 +114,71 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
       {/* Menu */}
       <nav className="flex-1 px-3 mt-6 space-y-1 overflow-y-auto sidebar-scroll">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-4 px-4 py-3 rounded-xl transition-all
-              ${
-                isActive
-                  ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/20"
-                  : "hover:bg-gray-800 hover:text-white"
-              }
-            `}
-          >
-            {item.icon}
-            <span className="font-medium">{item.label}</span>
-          </NavLink>
-        ))}
+        {menuItems.map((item) => {
+          const isOpenMenu = openMenus.includes(item.label);
+
+          if (item.children) {
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={() => toggleMenu(item.label)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-800 hover:text-white transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    {item.icon}
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <span
+                    className={`transition-transform ${
+                      isOpenMenu ? "rotate-90" : ""
+                    }`}
+                  >
+                    ▶
+                  </span>
+                </button>
+
+                {isOpenMenu && (
+                  <div className="ml-10 mt-1 space-y-1">
+                    {item.children.map((child) => (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        className={({ isActive }) => `
+                          block px-4 py-2 rounded-lg text-sm transition-all
+                          ${
+                            isActive
+                              ? "bg-pink-500/20 text-pink-400"
+                              : "hover:bg-gray-800"
+                          }
+                        `}
+                      >
+                        {child.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path!}
+              className={({ isActive }) => `
+                flex items-center gap-4 px-4 py-3 rounded-xl transition-all
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/20"
+                    : "hover:bg-gray-800 hover:text-white"
+                }
+              `}
+            >
+              {item.icon}
+              <span className="font-medium">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Footer */}

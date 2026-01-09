@@ -1,7 +1,8 @@
+// src/pages/LoginPage.tsx
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'; 
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 
 const LoginPage: React.FC = () => {
@@ -15,7 +16,9 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Logic: Nếu User bị redirect từ một trang khác tới Login, sau khi Login xong sẽ quay lại trang đó.
+  // Nếu truy cập thẳng Login, mặc định về / (Trang chủ)
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,14 +26,19 @@ const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Gọi API Login
       const success = await login(email, password);
+      
       if (success) {
+        // Chuyển hướng
         navigate(from, { replace: true });
       } else {
-        setError('Email hoặc mật khẩu không chính xác. Gợi ý: admin@gmail.com / 123456');
+        setError('Email hoặc mật khẩu không chính xác.');
       }
-    } catch (err) {
-      setError('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.');
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      const message = err.response?.data?.message || err.message || 'Đăng nhập thất bại.';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -44,7 +52,7 @@ const LoginPage: React.FC = () => {
              <HiOutlineLockClosed size={32} />
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900">Chào mừng trở lại</h1>
-          <p className="text-gray-500 mt-2 text-center">Đăng nhập để quản trị hệ thống momangshw</p>
+          <p className="text-gray-500 mt-2 text-center">Đăng nhập hệ thống momangshow</p>
         </div>
 
         {error && (
@@ -65,7 +73,7 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
-                placeholder="admin@gmail.com"
+                placeholder="user@example.com"
               />
             </div>
           </div>
@@ -100,15 +108,11 @@ const LoginPage: React.FC = () => {
             {isSubmitting ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Đang đăng nhập...
+                Đang xử lý...
               </>
             ) : 'Đăng Nhập'}
           </button>
         </form>
-
-        {/* <div className="mt-8 pt-6 border-t border-gray-100 flex justify-center">
-           <p className="text-xs text-gray-400 font-medium">Mặc định: admin@gmail.com / 123456</p>
-        </div> */}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   HiOutlineUserGroup
 } from 'react-icons/hi';
 import { getAllStaff, deleteStaff, Staff } from '../apis/api_staff';
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 const StaffManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const StaffManagement: React.FC = () => {
       setStaffList(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Lỗi khi tải danh sách nhân viên:', error);
-      alert('Không thể tải danh sách nhân viên.');
+      toast.error('Không thể tải danh sách nhân viên.'); // Thay alert
     } finally {
       setLoading(false);
     }
@@ -36,10 +37,10 @@ const StaffManagement: React.FC = () => {
       try {
         await deleteStaff(id);
         setStaffList(staffList.filter(s => s.id !== id));
-        alert('Đã xóa tài khoản nhân viên');
+        toast.success('Đã xóa tài khoản nhân viên'); // Thay alert success
       } catch (error) {
         console.error(error);
-        alert('Không thể xóa nhân viên lúc này.');
+        toast.error('Không thể xóa nhân viên lúc này.'); // Thay alert error
       }
     }
   };

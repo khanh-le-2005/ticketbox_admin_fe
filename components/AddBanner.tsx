@@ -9,6 +9,7 @@ import {
 // IMPORT API
 import { createBanner, getBannerById, updateBanner, Banner } from '../apis/api_banner-new';
 import { uploadImageFile, getImageUrl } from '../apis/api_image'; 
+import { toast } from 'react-toastify'; // 👈 Import Toast
 
 const AddBanner: React.FC = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const AddBanner: React.FC = () => {
             isActive: data.isActive
           });
         } catch (error) {
-          alert('Lỗi khi tải thông tin banner.');
+          toast.error('Lỗi khi tải thông tin banner.'); // Thay alert
           navigate('/banners');
         }
       };
@@ -65,7 +66,7 @@ const AddBanner: React.FC = () => {
       
       setFormData(prev => ({ ...prev, imageUrl: fullImageUrl }));
     } catch (error) {
-      alert('Không thể tải ảnh lên máy chủ. Vui lòng thử lại.');
+      toast.error('Không thể tải ảnh lên máy chủ. Vui lòng thử lại.'); // Thay alert
     } finally {
       setLoading(false);
     }
@@ -74,20 +75,23 @@ const AddBanner: React.FC = () => {
   // Xử lý lưu dữ liệu
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.imageUrl) return alert('Vui lòng tải ảnh banner!');
+    if (!formData.imageUrl) {
+        toast.error('Vui lòng tải ảnh banner!'); // Thay alert
+        return;
+    }
 
     setLoading(true);
     try {
       if (isEditMode && id) {
         await updateBanner(id, formData);
-        alert('Cập nhật thành công!');
+        toast.success('Cập nhật thành công!'); // Thay alert
       } else {
         await createBanner(formData);
-        alert('Thêm banner mới thành công!');
+        toast.success('Thêm banner mới thành công!'); // Thay alert
       }
       navigate('/banners');
     } catch (error) {
-      alert('Lỗi khi lưu dữ liệu. Vui lòng kiểm tra lại.');
+      toast.error('Lỗi khi lưu dữ liệu. Vui lòng kiểm tra lại.'); // Thay alert
     } finally {
       setLoading(false);
     }

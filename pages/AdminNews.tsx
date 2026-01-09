@@ -10,6 +10,7 @@ import {
 } from '../apis/api_article';
 // BỔ SUNG: Import getImageUrl từ file api_image.ts
 import { getImageUrl } from '../apis/api_image'; 
+import { toast } from 'react-toastify';
 
 // =================================================================
 // COMPONENT CHÍNH: AdminNews
@@ -55,10 +56,10 @@ const AdminNews: React.FC = () => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa bài viết ID: ${id}?`)) {
       try {
         await deleteArticle(id);
-        alert('Đã xóa bài viết thành công!');
+        toast.success('Đã xóa bài viết thành công!');
         fetchArticles();
       } catch (err) {
-        alert('Lỗi khi xóa bài viết. Vui lòng thử lại.');
+        toast.error('Lỗi khi xóa bài viết. Vui lòng thử lại.');
         console.error('Delete Error:', err);
       }
     }

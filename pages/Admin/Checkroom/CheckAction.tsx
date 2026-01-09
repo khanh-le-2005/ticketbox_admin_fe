@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-
-// --- CẤU HÌNH API ---
-const BASE_URL = "https://api.momangshow.vn";
+// 👇 1. Thay axios bằng axiosClient
+import axiosClient from "@/axiosclient"; 
+// (Lưu ý: Bạn kiểm tra lại đường dẫn import axiosClient cho đúng với cấu trúc folder của bạn)
 
 // --- TYPE DEFINITIONS ---
 interface Booking {
@@ -39,44 +38,49 @@ const HotelBookingManager: React.FC = () => {
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [manualRoomId, setManualRoomId] = useState("");
 
-  // State thông báo (Toast)
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "";
     msg: string;
-    visible: boolean; // Thêm biến này để điều khiển hiển thị
+    visible: boolean;
   }>({ type: "", msg: "", visible: false });
 
-  // --- HÀM HIỂN THỊ THÔNG BÁO (Toast Helper) ---
+  // --- HÀM HIỂN THỊ THÔNG BÁO ---
   const showToast = (type: "success" | "error", msg: string) => {
     setNotification({ type, msg, visible: true });
-    
-    // Tự động tắt sau 3 giây
     setTimeout(() => {
         setNotification((prev) => ({ ...prev, visible: false }));
     }, 4000);
   };
 
-  // --- HÀM GỌI API ---
+  // --- HÀM GỌI API (ĐÃ SỬA DÙNG axiosClient) ---
   const fetchData = async (searchKeyword: string) => {
     setIsSearching(true);
     if (searchKeyword.trim()) setBookings([]);
 
     try {
       console.log(`📡 Fetching... "${searchKeyword}"`);
-      const res = await axios.get(
-        `${BASE_URL}/api/hotel-bookings/history/search`,
+      
+      // 👇 2. Gọi qua axiosClient (Tự động gắn Token)
+      // URL gốc: /api/v1/hotel-bookings/history/search (Tuỳ vào baseURL của axiosClient)
+      // Nếu baseURL là '.../api/v1' thì chỉ cần gọi '/hotel-bookings/...'
+      const res: any = await axiosClient.get(
+        `/hotel-bookings/history/search`, 
         { params: { keyword: searchKeyword, page: 0, size: 30 } }
       );
 
-      const responseData = res.data;
+      // 👇 3. Xử lý response (axiosClient thường đã bóc 1 lớp .data)
+      // Kiểm tra xem res có phải là object chứa success không, hay là mảng luôn
+      const responseData = res.data || res; 
+
       if (responseData.success && responseData.data?.content) {
         setBookings(responseData.data.content);
+      } else if (Array.isArray(responseData)) {
+          setBookings(responseData);
       } else {
         setBookings([]);
       }
     } catch (error) {
       console.error("Lỗi fetch:", error);
-      // Không hiện lỗi khi đang gõ tìm kiếm để tránh phiền
     } finally {
       setIsSearching(false);
     }
@@ -102,8 +106,10 @@ const HotelBookingManager: React.FC = () => {
   const fetchAssignableRooms = async (bookingId: string) => {
     setIsLoadingRooms(true);
     try {
-      const res = await axios.get(`${BASE_URL}/api/hotel-bookings/${bookingId}/assignable-rooms`);
-      const rooms = res.data.data || res.data;
+      // 👇 Gọi qua axiosClient
+      const res: any = await axiosClient.get(`/hotel-bookings/${bookingId}/assignable-rooms`);
+      const rooms = res.data || res; // Bóc tách dữ liệu
+      
       if (Array.isArray(rooms) && rooms.length > 0) {
         setAssignableRooms(rooms);
         setSelectedRoomNum(rooms[0].roomNumber);
@@ -121,15 +127,19 @@ const HotelBookingManager: React.FC = () => {
   const handleCheckIn = async () => {
     if (!selectedBooking || !selectedRoomNum) return;
     try {
-      await axios.post(`${BASE_URL}/api/hotel-bookings/${selectedBooking.id}/check-in`, { roomNumbers: [selectedRoomNum] });
+      // 👇 Gọi qua axiosClient (POST)
+      await axiosClient.post(`/hotel-bookings/${selectedBooking.id}/check-in`, { 
+          roomNumbers: [selectedRoomNum] 
+      });
       
-      showToast("success", `✅ Check-in thành công phòng ${selectedRoomNum}!`); // Dùng hàm showToast
+      showToast("success", `✅ Check-in thành công phòng ${selectedRoomNum}!`);
       
       fetchData(keyword);
       setSelectedBooking({ ...selectedBooking, status: "CHECKED_IN", assignedRoomNumbers: selectedRoomNum });
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message;
-      showToast("error", "❌ Lỗi Check-in: " + msg); // Dùng hàm showToast
+      // Lỗi từ axiosClient trả về thường nằm trong error.response hoặc error.message
+      const msg = error.response?.data?.message || error.message || "Lỗi không xác định";
+      showToast("error", "❌ Lỗi Check-in: " + msg);
     }
   };
 
@@ -137,15 +147,16 @@ const HotelBookingManager: React.FC = () => {
     if (!selectedBooking) return;
     if (!window.confirm("Xác nhận trả phòng?")) return;
     try {
-      await axios.post(`${BASE_URL}/api/hotel-bookings/${selectedBooking.id}/check-out`);
+      // 👇 Gọi qua axiosClient (POST)
+      await axiosClient.post(`/hotel-bookings/${selectedBooking.id}/check-out`);
       
-      showToast("success", "✅ Trả phòng thành công!"); // Dùng hàm showToast
+      showToast("success", "✅ Trả phòng thành công!");
       
       fetchData(keyword);
       setSelectedBooking({ ...selectedBooking, status: "CHECKED_OUT" });
     } catch (error: any) {
       const msg = error.response?.data?.message || error.message;
-      showToast("error", "❌ Lỗi Trả phòng: " + msg); // Dùng hàm showToast
+      showToast("error", "❌ Lỗi Trả phòng: " + msg);
     }
   };
 
@@ -155,13 +166,16 @@ const HotelBookingManager: React.FC = () => {
     if (!roomId) return showToast("error", "Vui lòng nhập ID phòng!");
 
     try {
-      await axios.put(`${BASE_URL}/api/hotels/${selectedBooking.hotelId}/rooms/${roomId}/clean`);
+      // 👇 Gọi qua axiosClient (PUT)
+      // Lưu ý đường dẫn /hotels/...
+      await axiosClient.put(`/hotels/${selectedBooking.hotelId}/rooms/${roomId}/clean`);
       
-      showToast("success", "✨ Dọn phòng sạch sẽ (Status: AVAILABLE)"); // Dùng hàm showToast
+      showToast("success", "✨ Dọn phòng sạch sẽ (Status: AVAILABLE)");
       
       setManualRoomId("");
     } catch (error: any) {
-      showToast("error", "Lỗi Clean: " + error.message);
+      const msg = error.response?.data?.message || error.message;
+      showToast("error", "Lỗi Clean: " + msg);
     }
   };
 
@@ -176,7 +190,7 @@ const HotelBookingManager: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-100 font-sans p-4 gap-4 relative">
       
-      {/* 🔥🔥🔥 TOAST NOTIFICATION COMPONENT (CẢNH BÁO NỔI) 🔥🔥🔥 */}
+      {/* TOAST NOTIFICATION */}
       <div 
         className={`fixed top-6 right-6 z-50 transition-all duration-500 ease-in-out transform ${
             notification.visible ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0 pointer-events-none"
@@ -187,20 +201,15 @@ const HotelBookingManager: React.FC = () => {
             ? 'bg-white border-green-500 text-green-800' 
             : 'bg-white border-red-500 text-red-800'
          }`}>
-            {/* Icon */}
             <div className={`text-2xl ${notification.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
                 {notification.type === 'success' ? '✔' : '✖'}
             </div>
-            
-            {/* Nội dung */}
             <div>
                 <h4 className="font-bold text-sm uppercase mb-1">
                     {notification.type === 'success' ? 'Thành công' : 'Có lỗi xảy ra'}
                 </h4>
                 <p className="text-sm font-medium text-gray-600">{notification.msg}</p>
             </div>
-
-            {/* Nút đóng nhanh */}
             <button 
                 onClick={() => setNotification(prev => ({...prev, visible: false}))}
                 className="ml-auto text-gray-400 hover:text-gray-600"
@@ -209,10 +218,8 @@ const HotelBookingManager: React.FC = () => {
             </button>
          </div>
       </div>
-      {/* 🔥🔥🔥 END TOAST 🔥🔥🔥 */}
 
-
-      {/* 🟢 CỘT TRÁI: DANH SÁCH */}
+      {/* CỘT TRÁI: DANH SÁCH */}
       <div className="w-[35%] bg-white rounded-xl shadow-md flex flex-col overflow-hidden">
         <div className="p-4 border-b bg-gray-50">
           <h2 className="font-bold text-gray-700 mb-2 flex items-center justify-between">
@@ -260,7 +267,7 @@ const HotelBookingManager: React.FC = () => {
         </div>
       </div>
 
-      {/* 🔵 CỘT PHẢI: CHI TIẾT */}
+      {/* CỘT PHẢI: CHI TIẾT */}
       <div className="w-[65%] flex flex-col gap-4">
         <div className="flex-1 bg-white rounded-xl shadow-md p-6 overflow-y-auto relative">
           {!selectedBooking ? (
@@ -282,9 +289,6 @@ const HotelBookingManager: React.FC = () => {
                   {selectedBooking.assignedRoomNumbers && (
                     <>
                         <p className="text-purple-700 font-bold">🔑 Phòng: {selectedBooking.assignedRoomNumbers}</p>
-                        {/* <p className="col-span-2 text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded border mt-1">
-                            🆔 <strong>ID Phòng:</strong> {selectedBooking.assignedRoomIds || "Backend chưa trả về ID"}
-                        </p> */}
                     </>
                   )}
                 </div>

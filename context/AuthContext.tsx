@@ -1,94 +1,139 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import axios from 'axios';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
+import axiosClient from "@/axiosclient"; // Đảm bảo import đúng đường dẫn
 
-// Định nghĩa kiểu dữ liệu User khớp với Backend (AuthResponse)
-interface User {
-  token: string;
+// ================== TYPES ==================
+export interface User {
+  id?: string;
   username: string;
   email: string;
+  fullName?: string;
   role: string;
-  // thêm các trường khác nếu có
+  phone?: string;
+}
+
+interface AuthResponseData {
+  accessToken: string;
+  refreshToken: string;
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  role: string;
+  phone: string;
+}
+
+interface LoginResponse {
+  status: string;
+  message: string;
+  data: AuthResponseData;
 }
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
 
+// ================== CONTEXT ==================
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ================== PROVIDER ==================
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
-  
-  // 1. KHỞI TẠO: Đọc từ localStorage với key 'momang_user'
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem('momang_user'); 
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    setLoading(false);
+    // Khôi phục user từ localStorage khi load trang
+    try {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.error("Lỗi parse user data", error);
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // 2. HÀM LOGIN (Đã sửa logic bóc tách dữ liệu)
+  // ================== LOGIN ==================
   const login = async (email: string, pass: string): Promise<boolean> => {
     try {
-      // Gọi trực tiếp axios để tránh vòng lặp interceptor của axiosClient
-      const response = await axios.post('https://api.momangshow.vn/api/auth/login', {
-         email: email, // Khớp với LoginRequest trong Java
-         password: pass
+      // Gọi API Login
+      // Lưu ý: axiosClient ở trên response interceptor trả về `response.data`, 
+      // nên ở đây biến resData chính là body của json trả về
+      const resData = await axiosClient.post<any, LoginResponse>("/auth/login", {
+        email,
+        password: pass,
       });
 
-      // Backend trả về: { status: "...", message: "...", data: { token: ... } }
-      // Chúng ta cần lấy cái object bên trong `data`
-      
-      const responseBody = response.data; // Toàn bộ JSON
-
-      if (responseBody && responseBody.data) {
-        // Lấy phần lõi (Core Data) chứa Token
-        const userData = responseBody.data; 
-        
-        console.log("Login Success! User Data:", userData);
-
-        // 3. LƯU TOKEN: Lưu phần lõi này vào localStorage
-        localStorage.setItem('momang_user', JSON.stringify(userData)); 
-        
-        setUser(userData);
-        return true;
-      } else {
-        console.error("Cấu trúc phản hồi không đúng:", responseBody);
-        return false;
+      if (!resData?.data?.accessToken) {
+        throw new Error(resData.message || "Đăng nhập thất bại (Không có token)");
       }
 
+      // Tách token và thông tin user
+      const { accessToken, refreshToken, ...userInfo } = resData.data;
+
+      // Lưu vào LocalStorage
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(userInfo));
+
+      // Cập nhật State
+      setUser(userInfo);
+      return true;
     } catch (error: any) {
-      console.error("Login failed:", error.response?.data || error.message);
-      return false;
+      // Error message đã được xử lý bởi axios hoặc trả về raw
+      const msg = error.response?.data?.message || error.message || "Đăng nhập thất bại";
+      throw new Error(msg);
     }
   };
 
-  // 3. HÀM LOGOUT
+  // ================== LOGOUT ==================
   const logout = () => {
-    localStorage.removeItem('momang_user'); 
+    // Gọi API logout phía backend (fire and forget)
+    axiosClient.post("/auth/logout").catch((err) => console.warn("Logout API err:", err));
+
+    // Xóa dữ liệu local
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
     setUser(null);
-    // Chuyển hướng về trang login (Optional)
-    window.location.href = '/login';
+
+    // Điều hướng về login
+    window.location.href = "/login";
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        login,
+        logout,
+        loading,
+      }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );
 };
 
+// ================== HOOK ==================
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
   return context;
 };
