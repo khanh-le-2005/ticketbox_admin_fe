@@ -113,3 +113,18 @@ export interface IShowRequest {
   }[];
   companyId: string;
 }
+
+
+export interface LocationOption {
+  code: number;
+  name: string;
+  districts?: LocationOption[];
+  wards?: LocationOption[];
+}
+
+export interface GalleryItem {
+  id: string;
+  url: string;
+  originalId?: number;
+  file?: File;
+}

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  HiOutlinePlus, 
-  HiOutlinePencil, 
-  HiOutlineTrash, 
+import {
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
   HiOutlineRefresh,
   HiOutlineUserGroup
 } from 'react-icons/hi';
-import { getAllStaff, deleteStaff, Staff } from '../apis/api_staff';
+import { getAllStaff, deleteStaff } from '../apis/api_staff';
+import { Staff } from '@/type/staff.type';
 import { toast } from 'react-toastify'; // 👈 Import Toast
+import Swal from 'sweetalert2';
 
 const StaffManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -33,15 +35,27 @@ const StaffManagement: React.FC = () => {
   }, []);
 
   const handleDeleteStaff = async (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản nhân viên này không?')) {
-      try {
-        await deleteStaff(id);
-        setStaffList(staffList.filter(s => s.id !== id));
-        toast.success('Đã xóa tài khoản nhân viên'); // Thay alert success
-      } catch (error) {
-        console.error(error);
-        toast.error('Không thể xóa nhân viên lúc này.'); // Thay alert error
-      }
+    const result = await Swal.fire({
+      title: "Xóa nhân viên?",
+      text: "Bạn có chắc chắn muốn xóa tài khoản nhân viên này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteStaff(id);
+      setStaffList(prev => prev.filter(s => s.id !== id));
+      toast.success("Đã xóa tài khoản nhân viên");
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể xóa nhân viên lúc này.");
     }
   };
 
@@ -61,14 +75,14 @@ const StaffManagement: React.FC = () => {
           <p className="text-gray-500">Đội ngũ vận hành và quản trị hệ thống.</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={fetchData}
             className="p-3 text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"
             title="Làm mới"
           >
             <HiOutlineRefresh size={22} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button 
+          <button
             onClick={() => navigate('/users/staff/add')}
             className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-pink-500/20 active:scale-95"
           >
@@ -101,25 +115,25 @@ const StaffManagement: React.FC = () => {
                     <tr key={s.id} className="hover:bg-gray-50/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 font-bold text-sm">
-                                {(s.fullName ? s.fullName.charAt(0) : (s.username ? s.username.charAt(0) : '?')).toUpperCase()}
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900">{s.fullName || s.username}</p>
-                                <p className="text-[11px] text-gray-400">ID: {s.id?.substring(0, 8)}...</p>
-                            </div>
+                          <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 font-bold text-sm">
+                            {(s.fullName ? s.fullName.charAt(0) : (s.username ? s.username.charAt(0) : '?')).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">{s.fullName || s.username}</p>
+                            <p className="text-[11px] text-gray-400">ID: {s.id?.substring(0, 8)}...</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-600 text-sm">
                         <div className="space-y-1">
-                            <p className="font-mono flex items-center gap-1.5">
-                                <span className="text-gray-400">@</span> {s.email}
+                          <p className="font-mono flex items-center gap-1.5">
+                            <span className="text-gray-400">@</span> {s.email}
+                          </p>
+                          {s.phone && (
+                            <p className="text-xs text-gray-500 font-medium">
+                              📞 {s.phone}
                             </p>
-                            {s.phone && (
-                                <p className="text-xs text-gray-500 font-medium">
-                                    📞 {s.phone}
-                                </p>
-                            )}
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -129,15 +143,15 @@ const StaffManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={() => navigate(`/users/staff/edit/${s.id}`)} 
+                          <button
+                            onClick={() => navigate(`/users/staff/edit/${s.id}`)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Sửa thông tin"
                           >
                             <HiOutlinePencil size={20} />
                           </button>
-                          <button 
-                            onClick={() => s.id && handleDeleteStaff(s.id)} 
+                          <button
+                            onClick={() => s.id && handleDeleteStaff(s.id)}
                             className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                             title="Xóa tài khoản"
                           >

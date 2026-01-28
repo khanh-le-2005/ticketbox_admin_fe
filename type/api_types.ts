@@ -1,9 +1,10 @@
+import React from "react";
 // api_types.ts
 export interface UserData {
   id: string;
   username: string;
   email: string;
-  fullName: string; 
+  fullName: string;
   role: 'TO_CHUC' | 'VAN_HANH' | 'QUET_VE' | 'ADMIN' | string;
   createdAt?: string;
   active?: boolean;
@@ -37,3 +38,20 @@ export interface ApiResponse {
 }
 
 export const BASE_URL = 'https://api.momangshow.vn/api/auth';
+
+export interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+export interface MenuItem {
+  label: string;
+  path?: string;
+  icon: React.ReactNode;
+  children?: {
+    label: string;
+    path: string;
+  }[];
+}
+
+

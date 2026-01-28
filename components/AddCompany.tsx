@@ -19,7 +19,7 @@ const AddCompany: React.FC = () => {
   const isEditMode = !!id;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
-  
+
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -55,11 +55,22 @@ const AddCompany: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.fullName || !formData.username || !formData.email || 
-        !formData.phone || (!isEditMode && !formData.password)) {
-      toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc.'); // Thay alert
-      return;
+
+    // --- VALIDATION ---
+    if (!formData.fullName?.trim()) {
+      return toast.warn('Vui lòng nhập tên đầy đủ của Đối tác.');
+    }
+    if (!formData.username?.trim()) {
+      return toast.warn('Vui lòng nhập tên đăng nhập.');
+    }
+    if (!formData.email?.trim()) {
+      return toast.warn('Vui lòng nhập email liên hệ.');
+    }
+    if (!formData.phone?.trim()) {
+      return toast.warn('Vui lòng nhập số điện thoại.');
+    }
+    if (!isEditMode && !formData.password) {
+      return toast.warn('Vui lòng nhập mật khẩu cho tài khoản mới.');
     }
 
     setLoading(true);
@@ -81,7 +92,7 @@ const AddCompany: React.FC = () => {
         await createCompany(payload);
         toast.success('Đã thêm đối tác công ty thành công!'); // Thay alert
       }
-      
+
       // Quay lại tab đối tác
       navigate('/admin/companies');
     } catch (error: any) {
@@ -145,8 +156,8 @@ const AddCompany: React.FC = () => {
                 <HiOutlineUser className="text-pink-500" />
                 Tên đầy đủ (Full Name) *
               </label>
-              <input 
-                required 
+              <input
+                required
                 name="fullName"
                 className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all text-lg font-bold"
                 placeholder="VD: Ban Tổ Chức Sự Kiện ABC"
@@ -160,8 +171,8 @@ const AddCompany: React.FC = () => {
                 <HiOutlineIdentification className="text-pink-500" />
                 Tên đăng nhập (Username) *
               </label>
-              <input 
-                required 
+              <input
+                required
                 name="username"
                 className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-pink-500/10 transition-all font-mono"
                 placeholder="btc_event_abc"
@@ -175,8 +186,8 @@ const AddCompany: React.FC = () => {
                 <HiOutlineMail className="text-pink-500" />
                 Email liên hệ *
               </label>
-              <input 
-                required 
+              <input
+                required
                 type="email"
                 name="email"
                 className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-pink-500/10 transition-all"
@@ -191,8 +202,8 @@ const AddCompany: React.FC = () => {
                 <HiOutlinePhone className="text-pink-500" />
                 Số điện thoại *
               </label>
-              <input 
-                required 
+              <input
+                required
                 type="tel"
                 name="phone"
                 className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-pink-500/10 transition-all"
@@ -207,7 +218,7 @@ const AddCompany: React.FC = () => {
                 <HiOutlineLockClosed className="text-pink-500" />
                 Mật khẩu {isEditMode && '(Để trống nếu không đổi)'}
               </label>
-              <input 
+              <input
                 required={!isEditMode}
                 type="password"
                 name="password"
@@ -223,7 +234,7 @@ const AddCompany: React.FC = () => {
                 <HiOutlineShieldCheck className="text-pink-500" />
                 Vai trò mặc định
               </label>
-              <select 
+              <select
                 name="role"
                 value={formData.role}
                 disabled
@@ -235,15 +246,15 @@ const AddCompany: React.FC = () => {
           </div>
 
           <div className="pt-8 flex gap-4">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => navigate('/users?tab=companies')}
               className="flex-1 py-4 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all"
             >
               Hủy bỏ
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="flex-[2] py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg shadow-pink-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-70"
             >

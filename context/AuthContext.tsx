@@ -55,7 +55,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const savedUser = localStorage.getItem("user");
       if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        if (parsedUser.role === 'ADMIN') {
+          setUser(parsedUser);
+        } else {
+          // Nếu không phải ADMIN thì xóa sạch storage
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error("Lỗi parse user data", error);
@@ -82,6 +91,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Tách token và thông tin user
       const { accessToken, refreshToken, ...userInfo } = resData.data;
+
+      // Kiểm tra quyền ADMIN
+      if (userInfo.role !== 'ADMIN') {
+        throw new Error("Bạn không có quyền truy cập trang quản trị.");
+      }
 
       // Lưu vào LocalStorage
       localStorage.setItem("accessToken", accessToken);

@@ -13,22 +13,9 @@ import {
 import { FaHotel } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { MenuItem, SidebarProps } from "@/type/api_types";
 
-interface SidebarProps {
-  isOpen: boolean;
-}
-
-interface MenuItem {
-  label: string;
-  path?: string;
-  icon: React.ReactNode;
-  children?: {
-    label: string;
-    path: string;
-  }[];
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
@@ -56,9 +43,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       label: "Quản lý khách sạn",
       icon: <FaHotel size={22} />,
       children: [
+        { label: "Dashboard", path: "/hotels/dashboard" },
         { label: "Danh sách khách sạn", path: "/hotels" },
         { label: "Quản lý phòng", path: "/rooms" },
         { label: "Check-in / Check-out", path: "/CheckAction" },
+        { label: "Dọn phòng", path: "/cleanroom" },
+        { label: "Danh sách booking", path: "/hotels/BookingByDate" },
+        { label: "Danh sách Trả Phòng ", path: "/hotels/DailyDepartures" },
+        { label: "Danh sách Khách Đến ", path: "/hotels/DailyArrivals" },
+        { label: "Đặt phòng thủ công", path: "/hotels/ManualBookingPage" },
+        { label: "Biểu đồ Gantt", path: "/hotels/HotelGanttChart" },
       ],
     },
     {
@@ -107,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           <HiOutlineViewGrid size={24} />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">momang</h1>
+          <h1 className="text-xl font-bold text-white">MoMang</h1>
           <p className="text-xs text-gray-500 uppercase">Trang Quản Trị</p>
         </div>
       </div>
@@ -129,9 +123,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     <span className="font-medium">{item.label}</span>
                   </div>
                   <span
-                    className={`transition-transform ${
-                      isOpenMenu ? "rotate-90" : ""
-                    }`}
+                    className={`transition-transform ${isOpenMenu ? "rotate-90" : ""
+                      }`}
                   >
                     ▶
                   </span>
@@ -143,12 +136,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       <NavLink
                         key={child.path}
                         to={child.path}
+                        onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
                         className={({ isActive }) => `
                           block px-4 py-2 rounded-lg text-sm transition-all
-                          ${
-                            isActive
-                              ? "bg-pink-500/20 text-pink-400"
-                              : "hover:bg-gray-800"
+                          ${isActive
+                            ? "bg-pink-500/20 text-pink-400"
+                            : "hover:bg-gray-800"
                           }
                         `}
                       >
@@ -165,12 +158,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             <NavLink
               key={item.path}
               to={item.path!}
+              onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
               className={({ isActive }) => `
                 flex items-center gap-4 px-4 py-3 rounded-xl transition-all
-                ${
-                  isActive
-                    ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/20"
-                    : "hover:bg-gray-800 hover:text-white"
+                ${isActive
+                  ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/20"
+                  : "hover:bg-gray-800 hover:text-white"
                 }
               `}
             >

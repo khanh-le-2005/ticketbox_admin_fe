@@ -1,18 +1,5 @@
 import axiosClient from '../axiosclient';
-
-// --- INTERFACES ---
-export interface Staff {
-  id?: string;
-  fullName: string;
-  username: string;
-  email: string;
-  phone?: string;
-  role: 'VAN_HANH' | 'QUET_VE';
-  active?: boolean;
-  createdAt?: string;
-  password?: string;
-}
-
+import { Staff } from '@/type/staff.type';
 // --- API FUNCTIONS ---
 
 // Helper nội bộ để lấy user theo role

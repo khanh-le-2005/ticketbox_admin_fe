@@ -8,16 +8,23 @@ const Layout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} />
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content */}
       <div
-        className={`flex flex-col min-h-screen transition-all duration-300 ${
-          sidebarOpen ? "pl-64" : "pl-0"
-        }`}
+        className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? "md:pl-64" : "pl-0"
+          }`}
       >
         {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-40">
+        <header className="h-16 bg-white border-b border-gray-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-4">
             {/* Nút 3 gạch */}
             <button
@@ -42,8 +49,8 @@ const Layout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="p-8 flex-1">
-          <div className="max-w-7xl mx-auto">
+        <main className="p-4 md:p-8 flex-1">
+          <div className="w-full mx-auto">
             <Suspense
               fallback={
                 <div className="flex items-center justify-center h-64">

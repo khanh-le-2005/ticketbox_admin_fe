@@ -20,8 +20,17 @@ import Dashboard from "@/pages/Dashboard";
 import StaffManagement from "@/pages/StaffManagement";
 import Stagemanager from "@/pages/Admin/Stage/StageManager";
 import CheckAction from "@/pages/Admin/Checkroom/CheckAction";
-
+import CleanRoomAction from "@/pages/Admin/Checkroom/CleanRoomAction";
+import StageDesignerPage from "@/pages/Admin/Stage/StageDesigner";
+import StageCheckInPage from "@/pages/Admin/Stage/StageCheckIn";
+import DailyArrivals from "@/pages/Admin/Hotel/DailyArrival";
+import BookingByDate from "@/pages/Admin/Hotel/BookingByDate";
 import { Routes, Route, Navigate } from "react-router-dom";
+import EditHotel from "@/pages/Admin/Hotel/EditHotel";
+import HotelDashboard from "@/pages/Admin/Hotel/HotelDashboard";
+import DailyDepartures from "@/pages/Admin/Hotel/DailyDepartures";
+import ManualBookingPage from "@/pages/Admin/Hotel/ManualBookingPage";
+import HotelGanttChart from "@/pages/Admin/Hotel/HotelGanttChart";
 
 const AdminRouter = () => {
   return (
@@ -38,18 +47,27 @@ const AdminRouter = () => {
         <Route path="CheckAction" element={<CheckAction />} />
         {/* Quản lý sân khấu */}
         <Route path="stage" element={<Stagemanager />} />
-
-        <Route path="stage" element={<Stagemanager />} />
-        {/* <Route path="stage/create" element={<CreateHotel />} />
-        <Route path="stage/edit/:id" element={<CreateHotel />} /> */}
-
+        <Route path="/design/new" element={<StageDesignerPage />} />
+        {/* Trang thiết kế: Chỉnh sửa theo ID */}
+        <Route path="/design/:id" element={<StageDesignerPage />} />
+        {/* Trang Check-in: Theo ID */}
+        <Route path="/checkin/:id" element={<StageCheckInPage />} />
+        
         {/* Quản lý Khách sạn */}
+        <Route path="hotels/dashboard" element={<HotelDashboard />} />
         <Route index element={<Navigate to="/admin/hotels" replace />} />
         <Route path="/hotels/:hotelId/rooms" element={<RoomManagementPage />} />
         <Route path="hotels" element={<HotelManagement />} />
         <Route path="hotels/create" element={<CreateHotel />} />
-        <Route path="hotels/edit/:id" element={<CreateHotel />} />
+        <Route path="hotels/edit/:id" element={<EditHotel />} />
+        <Route path="hotels/DailyArrivals" element={<DailyArrivals />} />
+        <Route path="cleanroom" element={<CleanRoomAction />} />
+        <Route path="hotels/DailyDepartures" element={<DailyDepartures />} />
+        <Route path="hotels/BookingByDate" element={<BookingByDate />} />
+        <Route path="hotels/ManualBookingPage" element={<ManualBookingPage />} />
+        <Route path="hotels/HotelGanttChart" element={<HotelGanttChart />} />
 
+        
         {/* Quản lý Phòng */}
         <Route path="/rooms" element={<RoomManagementPage />} />
         <Route path="/rooms/create" element={<CreateRoomPage />} />
@@ -84,6 +102,7 @@ const AdminRouter = () => {
 
         <Route path="banners" element={<BannerManagement />} />
         <Route path="banners/add" element={<AddBanner />} />
+        <Route path="banners/edit/:id" element={<AddBanner />} />
 
         <Route path="shows" element={<ShowManagement />} />
         <Route path="shows/add" element={<AddShow />} />

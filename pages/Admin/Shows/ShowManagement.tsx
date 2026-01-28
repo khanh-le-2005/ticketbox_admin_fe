@@ -9,54 +9,63 @@ import {
   HiOutlineRefresh,
   HiOutlineClock,
   HiOutlineLocationMarker,
-  HiOutlineDuplicate, // 1️⃣ Import icon Sao chép
+  HiOutlineDuplicate,
 } from "react-icons/hi";
 
 import { IShow } from "@/type";
-import { showApi } from "@/apis";
+import { showApi } from "@/apis/api_show";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QueryKey } from "@/util/querykey";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const ShowManagement: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
-  // 1. Tạo state cho bộ lọc (Ví dụ mặc định lấy UPCOMING)
   const [filter, setFilter] = useState({
     page: 0,
     size: 10,
-    // status: "UPCOMING", // Nếu bạn muốn admin chỉ hiện show sắp tới thì bỏ comment dòng này
-    keyword: search, // Truyền search vào đây
+    // status: "UPCOMING", 
+    keyword: search,
   });
-
-  // 2. Cập nhật queryKey để nó bao gồm biến 'filter'
   const {
     isLoading: loading,
     data: shows = [],
     refetch,
   } = useQuery({
-    // 🔥 QUAN TRỌNG: Thêm 'filter' vào mảng này. Khi filter đổi, API tự gọi lại.
     queryKey: [QueryKey.getAllShow, filter, search],
-
-    // 🔥 Gọi API với tham số
     queryFn: () =>
       showApi.getAllShows({
         ...filter,
-        keyword: search, // Ưu tiên lấy từ state search
+        keyword: search,
       }),
   });
 
   console.log("Data show:", shows);
 
   const handleDelete = async (id: string) => {
-    // Hỏi xác nhận trước khi xóa
-    const confirmDelete = window.confirm(
-      "Bạn có chắc chắn muốn HỦY hoặc XÓA show diễn này không?\n\n- Nếu chưa bán vé: Show sẽ bị XÓA vĩnh viễn.\n- Nếu đã bán vé: Show sẽ chuyển sang trạng thái HỦY."
-    );
 
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Xác nhận HỦY / XÓA show diễn",
+      html: `
+    <p>Bạn có chắc chắn muốn tiếp tục không?</p>
+    <ul style="text-align:left; margin-top:8px">
+      <li>❌ <b>Chưa bán vé</b> → Show sẽ bị <b style="color:#d33">XÓA vĩnh viễn</b></li>
+      <li>⚠️ <b>Đã bán vé</b> → Show sẽ chuyển sang trạng thái <b>HỦY</b></li>
+    </ul>
+  `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Tiếp tục",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       // Gọi API cancelShow (Lưu ý: Backend yêu cầu POST, token đã được xử lý trong api_show.ts)
@@ -65,12 +74,12 @@ const ShowManagement: React.FC = () => {
       // Lấy thông báo từ Server trả về
       const message = response?.message || "Thao tác thành công!";
 
-      toast.success(`✅ ${message}`);
+      toast.success(`${message}`);
 
       // Tự động tải lại danh sách sau khi xóa thành công
       queryClient.invalidateQueries({ queryKey: [QueryKey.getAllShow] });
     } catch (error: any) {
-      console.error("Lỗi xóa show:", error);
+      // console.error("Lỗi xóa show:", error);
       // Hiển thị lỗi từ Backend (ví dụ: Không có quyền, show đang diễn ra...)
       const errorMessage =
         error?.response?.data?.message || "Lỗi hệ thống: Không thể xóa show.";
@@ -82,14 +91,9 @@ const ShowManagement: React.FC = () => {
   const formatDateTime = (isoString: string) => {
     if (!isoString) return "Chưa thiết lập";
     try {
-      // Backend trả về: "2025-12-31 20:00:00" hoặc "2025-12-31T20:00:00"
-      // Date constructor của JS xử lý tốt cả 2 nếu đúng chuẩn ISO hoặc RFC2822
-      // Nếu là khoảng trắng, replace thành T để an toàn
       const safeString = isoString.replace(" ", "T");
       const date = new Date(safeString);
-
       if (isNaN(date.getTime())) return isoString;
-
       const hours = date.getHours().toString().padStart(2, "0");
       const minutes = date.getMinutes().toString().padStart(2, "0");
       const day = date.getDate().toString().padStart(2, "0");
@@ -121,13 +125,26 @@ const ShowManagement: React.FC = () => {
     });
   };
 
-  const handleDuplicate = (show: IShow) => {
-    // Hỏi xác nhận (tuỳ chọn)
-    const confirmCopy = window.confirm(`Bạn muốn tạo bản sao cho show: "${show.name}"?`);
-    if (confirmCopy) {
-      // 🔥 QUAN TRỌNG: Chuyển sang trang ADD nhưng gửi kèm "state" chứa dữ liệu show cũ
-      navigate("/shows/add", { state: { copiedShow: show } });
-    }
+  const handleDuplicate = async (show: IShow) => {
+    const result = await Swal.fire({
+      title: "Tạo bản sao show?",
+      html: `
+      <p>Bạn muốn tạo bản sao cho show:</p>
+      <p><b>"${show.name}"</b></p>
+    `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Tạo bản sao",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    // 🔥 Chuyển sang trang ADD và gửi kèm dữ liệu show cũ
+    navigate("/shows/add", { state: { copiedShow: show } });
   };
 
   return (
@@ -142,7 +159,7 @@ const ShowManagement: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-           {/* <RefreshPage onClick={() => fetchShows} loading={loading} /> */}
+          {/* <RefreshPage onClick={() => fetchShows} loading={loading} /> */}
           <button
             onClick={fetchShows}
             className="p-3 text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"

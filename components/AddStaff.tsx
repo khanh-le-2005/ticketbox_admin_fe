@@ -64,9 +64,14 @@ const AddStaff: React.FC = () => {
     e.preventDefault();
 
     // 1. VALIDATION CƠ BẢN
-    if (!formData.username || !formData.fullName) {
-      toast.error("Vui lòng nhập đầy đủ: Tên đăng nhập và Họ tên."); // Thay alert
-      return;
+    if (!formData.username?.trim()) {
+      return toast.warn("Vui lòng nhập tên đăng nhập.");
+    }
+    if (!formData.fullName?.trim()) {
+      return toast.warn("Vui lòng nhập họ và tên nhân viên.");
+    }
+    if (!formData.email?.trim()) {
+      return toast.warn("Vui lòng nhập email.");
     }
 
     // 2. VALIDATION PHONE

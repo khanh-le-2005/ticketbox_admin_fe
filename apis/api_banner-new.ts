@@ -1,30 +1,15 @@
-// ✅ SỬA 1: Import axiosClient thay vì axios thường
-import axiosClient from '../axiosclient';
+import axiosClient from '@/axiosclient';
+import { Banner } from '@/type/new.type';
 
-// =================================================================
-// 1. INTERFACE/TYPES
-// =================================================================
+// Re-export Banner type so other files can import it from here
+export type { Banner };
 
-export interface Banner {
-  id?: string;
-  imageUrl: string;
-  title: string;
-  subtitle: string;
-  link: string;
-  menu: string;
-  displayOrder?: number;
-  isActive: boolean;
-}
-
-// Đường dẫn gốc khớp với Java Controller: @RequestMapping("/api/admin/banners")
 const ENDPOINT = '/admin/banners';
-
 // =================================================================
 // 2. CÁC HÀM GỌI API (ADMIN)
 // =================================================================
 
 export const getAllBanners = async (): Promise<Banner[]> => {
-  // axiosClient đã trả về response.data, nên return trực tiếp
   return await axiosClient.get(ENDPOINT);
 };
 
@@ -44,28 +29,23 @@ export const deleteBanner = async (id: string): Promise<void> => {
   return await axiosClient.delete(`${ENDPOINT}/${id}`);
 };
 
-// ✅ SỬA 2: Hàm Toggle Status
-// Vì Backend Java chỉ có PUT (Update full object), không có PATCH.
-// Nên ta phải dùng logic: Lấy object cũ -> Đổi trạng thái -> Gọi hàm Update
-export const toggleBannerStatus = async (id: string, currentBanner: Banner): Promise<Banner> => {
-  const updatedData = { ...currentBanner, isActive: !currentBanner.isActive };
-  return await updateBanner(id, updatedData);
+// Sửa lại hàm này: Nhận vào banner (đã chứa trạng thái mới) và gọi update
+export const toggleBannerStatus = async (id: string, active: boolean): Promise<Banner> => {
+  return await axiosClient.patch(`${ENDPOINT}/${id}/status`, null, {
+    params: { active }
+  });
 };
-
 
 // =================================================================
 // 3. CÁC HÀM GỌI API (PUBLIC)
 // =================================================================
-
 export const getActiveBannersByMenu = async (menu: string): Promise<Banner[]> => {
-    try {
-        // Gọi endpoint /byMenu (Backend Java đã permitAll cho endpoint này)
-        // Path thực tế: /api/admin/banners/byMenu
-        return await axiosClient.get(`${ENDPOINT}/byMenu`, { 
-            params: { menu } 
-        });
-    } catch (error) {
-        console.error(`Error fetching active banners for menu ${menu}:`, error);
-        return []; // Trả về mảng rỗng để không crash trang web
-    }
+  try {
+    return await axiosClient.get(`${ENDPOINT}/active-all`, {
+      params: { menu }
+    });
+  } catch (error) {
+    console.error(`Error fetching active banners for menu ${menu}:`, error);
+    return [];
+  }
 };

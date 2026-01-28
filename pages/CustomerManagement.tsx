@@ -15,6 +15,7 @@ import {
 import { toast } from 'react-toastify'; // 👈 Import Toast
 // 👇 Đảm bảo import searchCustomers từ file api
 import { getAllCustomers, deleteCustomer, searchCustomers, Customer } from '../apis/api_user';
+import Swal from 'sweetalert2';
 
 const CustomerManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const CustomerManagement: React.FC = () => {
       // Nếu có từ khóa -> Gọi API tìm kiếm
       if (keyword.trim()) {
         data = await searchCustomers(keyword);
-      } 
+      }
       // Nếu không -> Gọi API lấy tất cả
       else {
         data = await getAllCustomers();
@@ -49,23 +50,43 @@ const CustomerManagement: React.FC = () => {
   // Tự động gọi API sau khi ngừng gõ 500ms
   useEffect(() => {
     const timer = setTimeout(() => {
-        fetchData(searchTerm);
+      fetchData(searchTerm);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
   const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm('CẢNH BÁO: Xóa khách hàng này sẽ xóa toàn bộ lịch sử đặt vé. Bạn có chắc chắn?')) {
-      try {
-        await deleteCustomer(id);
-        // Xóa xong thì load lại dữ liệu hiện tại
-        fetchData(searchTerm);
-        toast.success('Đã xóa khách hàng thành công'); // Thay alert success
-      } catch (error) {
-        console.error(error);
-        toast.error('Không thể xóa khách hàng lúc này.'); // Thay alert error
-      }
+    const result = await Swal.fire({
+      title: "CẢNH BÁO!",
+      html: `
+      <p><b>Xóa khách hàng này sẽ:</b></p>
+      <ul style="text-align:left; margin-top:8px">
+        <li>❌ Xóa toàn bộ lịch sử đặt vé</li>
+        <li>❌ Không thể khôi phục dữ liệu</li>
+      </ul>
+      <p style="color:#d33; margin-top:8px">
+        Bạn có chắc chắn muốn tiếp tục?
+      </p>
+    `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "XÓA KHÁCH HÀNG",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteCustomer(id);
+      fetchData(searchTerm);
+      toast.success("Đã xóa khách hàng thành công");
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể xóa khách hàng lúc này.");
     }
   };
 
@@ -180,7 +201,7 @@ const CustomerManagement: React.FC = () => {
                           <span className="font-mono text-xs">{formatDate(c.createdAt)}</span>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button

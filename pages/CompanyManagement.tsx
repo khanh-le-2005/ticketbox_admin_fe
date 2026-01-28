@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  HiOutlinePlus, 
-  HiOutlinePencil, 
-  HiOutlineTrash, 
+import {
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
   HiOutlineRefresh,
   HiOutlineOfficeBuilding,
   HiOutlinePhone, // ✅ Đã thêm icon điện thoại
@@ -13,6 +13,7 @@ import {
 // Import interface Company từ file api của bạn
 import { getAllCompanies, deleteCompany, Company } from '../apis/api_company';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const CompanyManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const CompanyManagement: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getAllCompanies();
-      
+
       if (response && response.data && Array.isArray(response.data)) {
         setCompanies(response.data);
       } else if (Array.isArray(response)) {
@@ -43,15 +44,30 @@ const CompanyManagement: React.FC = () => {
   }, []);
 
   const handleDeleteCompany = async (id: string) => {
-    if (window.confirm('Xóa công ty này? Thao tác này có thể ảnh hưởng đến các nhân viên liên quan.')) {
-      try {
-        await deleteCompany(id);
-        setCompanies(prev => prev.filter(c => c.id !== id));
-        toast.success('Đã xóa đối tác thành công');
-      } catch (error) {
-        console.error(error);
-        toast.error('Không thể xóa đối tác lúc này.');
-      }
+    const result = await Swal.fire({
+      title: "Xóa công ty?",
+      html: `
+      <p>Bạn có chắc chắn muốn xóa công ty này không?</p>
+      <p style="color:#d33"><b>Lưu ý:</b> Thao tác này có thể ảnh hưởng đến các nhân viên liên quan.</p>
+    `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteCompany(id);
+      setCompanies(prev => prev.filter(c => c.id !== id));
+      toast.success("Đã xóa đối tác thành công");
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể xóa đối tác lúc này.");
     }
   };
 
@@ -66,14 +82,14 @@ const CompanyManagement: React.FC = () => {
           <p className="text-gray-500">Danh sách các doanh nghiệp và tổ chức hợp tác.</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={fetchData}
             className="p-3 text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"
             title="Làm mới dữ liệu"
           >
             <HiOutlineRefresh size={22} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button 
+          <button
             onClick={() => navigate('/users/companies/add')}
             className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-pink-500/20 active:scale-95"
           >
@@ -109,66 +125,66 @@ const CompanyManagement: React.FC = () => {
                       {/* Cột 1: Thông tin chung */}
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-3">
-                            <div className="mt-1">
-                                <p className="font-bold text-gray-900 text-base">{c.fullName}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-mono">
-                                        @{c.username}
-                                    </span>
-                                    <span className="text-[10px] text-blue-500 font-bold uppercase">
-                                        {c.role}
-                                    </span>
-                                </div>
+                          <div className="mt-1">
+                            <p className="font-bold text-gray-900 text-base">{c.fullName}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-mono">
+                                @{c.username}
+                              </span>
+                              <span className="text-[10px] text-blue-500 font-bold uppercase">
+                                {c.role}
+                              </span>
                             </div>
+                          </div>
                         </div>
                       </td>
-                      
+
                       {/* Cột 2: Email */}
                       <td className="px-6 py-4">
                         <div className="text-sm">
-                            <p className="text-gray-700 font-medium">{c.email}</p>
+                          <p className="text-gray-700 font-medium">{c.email}</p>
                         </div>
                       </td>
 
                       {/* Cột 3: Trạng thái */}
                       <td className="px-6 py-4">
                         {c.active ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-[11px] font-bold border border-green-100">
-                                <HiOutlineCheckCircle /> Hoạt động
-                            </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-[11px] font-bold border border-green-100">
+                            <HiOutlineCheckCircle /> Hoạt động
+                          </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-bold border border-red-100">
-                                <HiOutlineBan /> Đã khóa
-                            </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-bold border border-red-100">
+                            <HiOutlineBan /> Đã khóa
+                          </span>
                         )}
                       </td>
 
                       {/* 👇 Cột 4: SỐ ĐIỆN THOẠI (ĐÃ SỬA) */}
                       <td className="px-6 py-4">
-                         <div className="flex items-center gap-2 text-gray-500 text-sm">
-                            <HiOutlinePhone className="text-gray-400 shrink-0"/>
-                            {c.phone ? (
-                                <span className="font-mono text-gray-700 font-medium tracking-wide">
-                                    {c.phone}
-                                </span>
-                            ) : (
-                                <span className="text-gray-300 italic text-xs">---</span>
-                            )}
-                         </div>
+                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                          <HiOutlinePhone className="text-gray-400 shrink-0" />
+                          {c.phone ? (
+                            <span className="font-mono text-gray-700 font-medium tracking-wide">
+                              {c.phone}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300 italic text-xs">---</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Cột 5: Thao tác */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={() => navigate(`/users/companies/edit/${c.id}`)} 
+                          <button
+                            onClick={() => navigate(`/users/companies/edit/${c.id}`)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Chỉnh sửa thông tin"
                           >
                             <HiOutlinePencil size={20} />
                           </button>
-                          <button 
-                            onClick={() => c.id && handleDeleteCompany(c.id)} 
+                          <button
+                            onClick={() => c.id && handleDeleteCompany(c.id)}
                             className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                             title="Xóa công ty"
                           >

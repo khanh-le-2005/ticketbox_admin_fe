@@ -1,12 +1,18 @@
 export * from "./Show.type";
 export * from './room.types';
+import { RoomTypePayload } from './room.types';
+export * from './article.type';
+export * from './auth.type';
+export * from './company.type';
+export * from './staff.type';
+export * from './user.type';
 
 
 // src/types/index.ts
 
 // --- COMMON ---
 export interface ApiResponse<T> {
-  success: boolean;
+  success: boolean | number;
   message: string;
   data: T;
 }
@@ -19,15 +25,7 @@ export interface UploadResponse {
 }
 
 // --- ROOM TYPES (Loại phòng) ---
-export interface RoomTypePayload {
-  name: string;
-  pricePerNight: number;
-  totalRooms: number;
-  capacity: number;
-}
-
 export interface RoomType extends RoomTypePayload {
-  id?: number | string;
   code?: string;
 }
 
@@ -37,10 +35,17 @@ export interface Hotel {
   name: string;
   address: string;
   description?: string;
-  galleryImageIds: number[]; 
+  galleryImageIds: number[];
   images?: UploadResponse[];
-  roomTypes: RoomType[]; // Sử dụng RoomType đã định nghĩa ở trên
+
+  // Các trường giá do BE tính toán trả về
+  minPrice: number;
+  maxPrice: number;
+  totalRoomTypes: number;
+
+  roomTypes: RoomType[];
   rating?: number;
+  avatarUrl?: string; // Field phụ do FE tự map thêm
   createdAt?: string;
 }
 
@@ -56,8 +61,8 @@ export interface UpdateHotelRequest {
   name?: string;
   address?: string;
   description?: string;
-  galleryImageIds?: number[];
-  roomTypes?: RoomTypePayload[]; 
+  keptImageIds?: number[];    // Backend uses this for all images (old + new)
+  roomTypes?: RoomTypePayload[];
 }
 
 // --- PHYSICAL ROOM (Phòng vật lý - Room Instance) ---
@@ -66,38 +71,4 @@ export interface RoomInstancePayload {
   roomTypeCode: string;
   roomNumber: string;
   floor: number;
-}
-
-
-
-export interface RoomType {
-  code?: string;
-  name: string;
-  totalRooms: number;
-  
-  // Các trường mới
-  standardCapacity: number;
-  maxCapacity: number;
-  surchargePerPerson: number;
-  priceWeekday: number;
-  priceFriday: number;
-  priceSaturday: number;
-  priceSunday: number;
-}
-
-export interface Hotel {
-  id: string;
-  name: string;
-  address: string;
-  description?: string;
-  galleryImageIds: number[];
-  
-  // Các trường giá do BE tính toán trả về
-  minPrice: number;
-  maxPrice: number;
-  totalRoomTypes: number;
-  
-  roomTypes: RoomType[];
-  rating?: number;
-  avatarUrl?: string; // Field phụ do FE tự map thêm
 }

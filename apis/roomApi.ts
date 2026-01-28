@@ -24,13 +24,22 @@ const roomApi = {
     return axiosClient.post<ApiResponse<any>>('/hotel-rooms', data);
   },
 
-    getRoomById: (roomId: string) => {
+  getRoomById: (roomId: string) => {
     return axiosClient.get(`/hotel-rooms/${roomId}`);
   },
 
   // 2. Cập nhật thông tin phòng
   updateRoom: (roomId: string, data: RoomInstancePayload & { status?: string }) => {
     return axiosClient.put(`/hotel-rooms/${roomId}`, data);
+  },
+  // Lấy danh sách phòng cần dọn dẹp (Dirty)
+  getDirtyRooms: (hotelId: string) => {
+    return axiosClient.get(`/hotels/${hotelId}/rooms/dirty`);
+  },
+
+  // Xác nhận đã dọn phòng (Clean)
+  markRoomAsClean: (hotelId: string, roomId: string) => {
+    return axiosClient.put(`/hotels/${hotelId}/rooms/${roomId}/clean`);
   },
 };
 

@@ -1,50 +1,11 @@
-
-
-
-
-import axios, { AxiosResponse } from 'axios';
-import { BASE_API_URL } from './api_base';
-
-// =================================================================
-// 1. INTERFACE/TYPES (BỔ SUNG TRƯỜNG MENU)
-// =================================================================
-
-export type ArticleStatus = 'DRAFT' | 'PUBLISHED' | 'PENDING';
-
-export interface Article {
-  id?: string;
-  title: string;
-  shortDescription: string;
-  content: string; 
-  tags: string;
-  thumbUrl: string;
-  menu?: string; // BỔ SUNG TRƯỜNG MENU
-  seoTitle: string;
-  seoDescription: string;
-  status: ArticleStatus;
-  createdDate?: string;
-  publishedDate?: string;
-}
-
-
+import { AxiosResponse } from 'axios';
+import axiosClient from '@/axiosclient';
+import { Article, ArticleStatus } from '@/type';
+export type { Article, ArticleStatus };
 // =================================================================
 // 2. CẤU HÌNH API
 // =================================================================
-
-const API_ADMIN_BASE_URL = `${BASE_API_URL}/admin/news`; 
-
-// Axios instance cho Admin
-const adminApi = axios.create({
-  baseURL: API_ADMIN_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Axios instance cho Public (không cần Auth)
-const publicApi = axios.create({
-    baseURL: API_ADMIN_BASE_URL,
-});
+// Using centralized axiosClient for proper authentication handling
 
 
 // =================================================================
@@ -57,8 +18,10 @@ const publicApi = axios.create({
  */
 export const getAllArticles = async (): Promise<Article[]> => {
   try {
-    const response: AxiosResponse<Article[]> = await adminApi.get('');
-    return response.data;
+    const response: any = await axiosClient.get('/admin/news');
+    // Handle different response structures
+    const articles = response?.data || response || [];
+    return Array.isArray(articles) ? articles : [];
   } catch (error) {
     console.error('Error fetching all articles:', error);
     throw error;
@@ -69,8 +32,8 @@ export const getAllArticles = async (): Promise<Article[]> => {
 
 export const getArticleById = async (id: string): Promise<Article> => {
   try {
-    const response: AxiosResponse<Article> = await adminApi.get(`/${id}`);
-    return response.data;
+    const response: any = await axiosClient.get(`/admin/news/${id}`);
+    return response?.data || response;
   } catch (error) {
     console.error(`Error fetching article with ID ${id}:`, error);
     throw error;
@@ -79,9 +42,9 @@ export const getArticleById = async (id: string): Promise<Article> => {
 
 export const createArticle = async (articleData: Article): Promise<Article> => {
   try {
-    const { id, ...dataToSend } = articleData; 
-    const response: AxiosResponse<Article> = await adminApi.post('', dataToSend);
-    return response.data;
+    const { id, ...dataToSend } = articleData;
+    const response: any = await axiosClient.post('/admin/news', dataToSend);
+    return response?.data || response;
   } catch (error) {
     console.error('Error creating article:', error);
     throw error;
@@ -90,9 +53,9 @@ export const createArticle = async (articleData: Article): Promise<Article> => {
 
 export const updateArticle = async (id: string, articleData: Article): Promise<Article> => {
   try {
-    const dataToSend = { ...articleData, id }; 
-    const response: AxiosResponse<Article> = await adminApi.put(`/${id}`, dataToSend);
-    return response.data;
+    const dataToSend = { ...articleData, id };
+    const response: any = await axiosClient.put(`/admin/news/${id}`, dataToSend);
+    return response?.data || response;
   } catch (error) {
     console.error(`Error updating article with ID ${id}:`, error);
     throw error;
@@ -101,7 +64,7 @@ export const updateArticle = async (id: string, articleData: Article): Promise<A
 
 export const deleteArticle = async (id: string): Promise<void> => {
   try {
-    await adminApi.delete(`/${id}`);
+    await axiosClient.delete(`/admin/news/${id}`);
   } catch (error) {
     console.error(`Error deleting article with ID ${id}:`, error);
     throw error;
@@ -118,17 +81,18 @@ export const deleteArticle = async (id: string): Promise<void> => {
  * GET /api/news?menu={menu}
  * @param menu - Tên menu cần lấy bài viết (VD: homepage, blog, etc.)
  */
-export const getPublishedNewsByMenu = async (menu: string): Promise<Article[]> => { // ĐÃ SỬA HÀM NÀY
-    try {
-        // Gọi đến Public Controller /api/news với tham số menu
-        const response: AxiosResponse<Article[]> = await publicApi.get('/byMenu', { 
-            params: { menu } 
-        });
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching published news for menu ${menu}:`, error);
-        throw error;
-    }
+export const getPublishedNewsByMenu = async (menu: string): Promise<Article[]> => {
+  try {
+    // Gọi đến Public Controller /api/news với tham số menu
+    const response: any = await axiosClient.get('/news/byMenu', {
+      params: { menu }
+    });
+    const articles = response?.data || response || [];
+    return Array.isArray(articles) ? articles : [];
+  } catch (error) {
+    console.error(`Error fetching published news for menu ${menu}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -136,25 +100,14 @@ export const getPublishedNewsByMenu = async (menu: string): Promise<Article[]> =
  * GET /api/news/{id}
  */
 export const getPublicArticleById = async (id: string): Promise<Article> => {
-    try {
-        const response: AxiosResponse<Article> = await publicApi.get(`/${id}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching public article with ID ${id}:`, error);
-        throw error;
-    }
+  try {
+    const response: any = await axiosClient.get(`/news/${id}`);
+    return response?.data || response;
+  } catch (error) {
+    console.error(`Error fetching public article with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-adminApi.interceptors.request.use((config) => {
-  const savedUser = localStorage.getItem('momang_user');
-  if (savedUser) {
-    const user = JSON.parse(savedUser);
-    // Lưu ý: user.token phải tồn tại sau khi bạn đăng nhập thật
-    if (user.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
-    }
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// Authentication is now handled by the centralized axiosClient interceptor
+// No need for custom interceptor here

@@ -7,6 +7,7 @@ import hotelApi from "@/apis/hotelApi";
 import { Hotel } from "@/type";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
+import Swal from "sweetalert2";
 
 const FALLBACK_IMAGE = "https://placehold.co/150?text=No+Image";
 const IMAGE_BASE_URL = "https://api.momangshow.vn/api/images";
@@ -71,19 +72,34 @@ const HotelManagement: React.FC = () => {
   };
 
   const handleNavigateCreate = () => navigate("/hotels/create");
-  const handleNavigateEdit = (id: string) => navigate(`/hotels/edit/${id}`);
+  const handleNavigateEdit = (id: string) => {
+    // Chuyển hướng đến /hotels/edit/ + ID của khách sạn
+    navigate(`/hotels/edit/${id}`);
+  };
   const handleViewDashboard = (id: string) => navigate(`/hotels/${id}/dashboard`);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa khách sạn này?")) {
-      try {
-        await hotelApi.delete(id);
-        setHotels(prev => prev.filter((h) => h.id !== id));
-        toast.success("Đã xóa thành công!");
-      } catch (error) {
-        console.error(error);
-        toast.error("Lỗi khi xóa khách sạn.");
-      }
+    const result = await Swal.fire({
+      title: "Xóa khách sạn?",
+      text: "Bạn có chắc chắn muốn xóa khách sạn này không? Hành động này không thể hoàn tác.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await hotelApi.delete(id);
+      setHotels(prev => prev.filter(h => h.id !== id));
+      toast.success("Đã xóa thành công!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi khi xóa khách sạn.");
     }
   };
 
@@ -94,12 +110,12 @@ const HotelManagement: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       {/* Header Section */}
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-3 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 flex items-center gap-3 tracking-tight">
               <span className="bg-orange-100 p-2 rounded-lg text-orange-600">
                 <FaHotel size={24} />
               </span>
@@ -112,7 +128,7 @@ const HotelManagement: React.FC = () => {
 
           <button
             onClick={handleNavigateCreate}
-            className="group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-orange-500/30 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 font-semibold"
+            className="w-full lg:w-auto group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 font-semibold"
           >
             <FaPlus className=" transition-transform duration-300" />
             Thêm Khách Sạn Mới
@@ -120,7 +136,7 @@ const HotelManagement: React.FC = () => {
         </div>
 
         {/* Stats & Search Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Stat Card */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -133,21 +149,21 @@ const HotelManagement: React.FC = () => {
           </div>
 
           {/* Search Box */}
-          <div className="md:col-span-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center">
+          <div className="lg:col-span-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center">
             <div className="pl-4 text-slate-400">
               <FaSearch size={18} />
             </div>
             <input
               type="text"
               placeholder="Tìm kiếm khách sạn theo tên, địa chỉ..."
-              className="w-full p-3 bg-transparent outline-none text-slate-700 placeholder-slate-400 font-medium"
+              className="w-full p-3 bg-transparent outline-none text-slate-700 placeholder-slate-400 font-medium text-sm md:text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="mr-4 text-slate-400 hover:text-slate-600 text-sm font-bold"
+                className="mr-4 text-slate-400 hover:text-slate-600 text-sm font-bold whitespace-nowrap"
               >
                 Xóa
               </button>
@@ -230,6 +246,9 @@ const HotelManagement: React.FC = () => {
                                   <div className="flex items-center gap-3 text-xs text-slate-500">
                                     <span title="Số lượng phòng" className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100">
                                       <span className="font-bold text-slate-700">{rt.totalRooms}</span> phòng
+                                    </span>
+                                    <span title="Giá ngày thường" className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-orange-600 font-bold">
+                                      {formatCurrency(rt.priceMonToThu || 0)}
                                     </span>
                                     <span title="Sức chứa" className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100">
                                       <FaUserFriends className="text-slate-400" /> {rt.standardCapacity}-{rt.maxCapacity}

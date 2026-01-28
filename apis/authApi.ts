@@ -1,25 +1,9 @@
-import axiosClient from "./axiosClient";
+import axiosClient from "../axiosclient";
 import { ApiResponse } from "@/type"; // Đảm bảo bạn có type ApiResponse chung
+import { UserSummary, AuthResponse, RefreshTokenRequest } from "@/type/auth.type";
 
 // --- INTERFACES ---
-export interface UserSummary {
-  id: string;
-  username: string;
-  fullName: string;
-  email: string;
-  role: string;
-}
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  user: UserSummary;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
 
 const authApi = {
   /**
@@ -45,10 +29,10 @@ const authApi = {
   refreshToken: (data: RefreshTokenRequest) => {
     return axiosClient.post<ApiResponse<AuthResponse>>('/auth/refresh-token', data);
   },
-  
+
   // ... (giữ lại hàm login/register cũ của bạn nếu có)
   login: (credentials: any) => {
-      return axiosClient.post('/auth/login', credentials);
+    return axiosClient.post('/auth/login', credentials);
   }
 };
 
