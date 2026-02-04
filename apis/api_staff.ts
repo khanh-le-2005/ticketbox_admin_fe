@@ -28,13 +28,9 @@ export const getAllStaff = async (): Promise<Staff[]> => {
 
 // Hàm lấy chi tiết nhân viên để đổ vào form sửa
 export const getStaffById = async (id: string): Promise<Staff> => {
-  // 🟢 CÁCH MỚI: Lấy danh sách rồi tự lọc (Vì API get detail đang lỗi)
   try {
-    // 1. Gọi hàm lấy tất cả nhân viên (đã có sẵn ở trên)
     const allStaff = await getAllStaff(); 
     
-    // 2. Tìm nhân viên có id trùng khớp
-    // (Kiểm tra cả id và _id phòng trường hợp backend trả về khác nhau)
     const staff = allStaff.find((u: any) => u.id === id || u._id === id);
 
     if (staff) {

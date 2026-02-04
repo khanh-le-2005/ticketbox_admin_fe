@@ -1,13 +1,32 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Move, Trash2, RotateCw, Save, ArrowLeft, Square,
-  Grid3X3, MousePointer2, XCircle, Hand, ZoomIn, ZoomOut,
-  Maximize, Undo, Redo, Copy, Clipboard
+  Move,
+  Trash2,
+  RotateCw,
+  Save,
+  ArrowLeft,
+  Square,
+  Grid3X3,
+  MousePointer2,
+  XCircle,
+  Hand,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  Undo,
+  Redo,
+  Copy,
+  Clipboard,
+  Loader2 // Import thêm icon loading
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { SeatType, Zone, StageData, Seat } from "@/type/Stage.type"; // Đảm bảo đường dẫn import đúng
+import { SeatType, Zone, StageData, Seat } from "@/type/Stage.type";
+import axiosClient from "@/axiosclient";
 
-// --- CONFIG & CONSTANTS ---
+// --- CONFIG API ---
+// Thay đổi URL này thành địa chỉ backend thực tế của bạn
+// const API_BASE_URL = "http://localhost:8080"; // Ví dụ: https://api.yoursite.com
+
 const SEAT_SIZE = 40;
 const GAP = 6;
 const getGridBaseSize = (rows: number, cols: number) => ({
@@ -63,6 +82,7 @@ const StageDesigner: React.FC<StageDesignerProps> = ({ initialData, onSave, onBa
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const [isPanning, setIsPanning] = useState(false);
   const [isRightZooming, setIsRightZooming] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // State loading khi gọi API
   const lastMousePos = useRef<{ x: number; y: number } | null>(null);
 
   const [zones, setZones] = useState<Zone[]>(initialData?.zones || []);
@@ -164,7 +184,7 @@ const StageDesigner: React.FC<StageDesignerProps> = ({ initialData, onSave, onBa
     setView((prev) => ({ ...prev, scale: Math.min(Math.max(0.1, prev.scale + delta), 5) }));
   };
 
-  // Logic Functions (Create, Paste, Move, Resize, etc.)
+  // Logic Functions
   const handlePasteZone = (temp: Zone) => {
     recordHistory();
     const newSeats = temp.seats.map((s) => ({ ...s, id: `${Date.now()}-${Math.random()}`, isOccupied: false }));
@@ -321,20 +341,58 @@ const StageDesigner: React.FC<StageDesignerProps> = ({ initialData, onSave, onBa
     setSelectedZoneId(null);
   };
 
-const handleSaveBtn = () => {
-    // 1. Thực hiện lưu dữ liệu
-    onSave({
-      id: initialData?.id || Date.now().toString(),
-      name: stageName,
-      zones,
-      lastModified: new Date().toLocaleString(),
-    });
+  // --- API INTEGRATION ---
+  const handleSaveBtn = async () => {
+    if (!stageName.trim()) {
+      toast.error("Vui lòng nhập tên sân khấu");
+      return;
+    }
 
-    // 2. Hiển thị thông báo
-    toast.success("Đã lưu thiết kế thành công!");
+    setIsSaving(true); // Bắt đầu loading
 
-    // 3. Gọi hàm quay lại (Thêm dòng này)
-    onBack(); 
+    try {
+      // 1. Chuẩn bị dữ liệu
+      const finalData: StageData = {
+        id: initialData?.id || crypto.randomUUID(),
+        name: stageName,
+        zones,
+        lastModified: new Date().toISOString(),
+      };
+
+      // 2. Lấy Token từ LocalStorage (Sửa key nếu bạn dùng key khác)
+      const token = localStorage.getItem("accessToken"); 
+      
+      if (!token) {
+        toast.warn("Cảnh báo: Không tìm thấy Token đăng nhập");
+      }
+
+      const response = await fetch(`${axiosClient.defaults.baseURL}/stages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(finalData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Lỗi khi lưu dữ liệu");
+      }
+
+      // 4. Thành công
+      const result = await response.json();
+      toast.success("Đã lưu thiết kế thành công!");
+      
+      onSave(finalData); // Cập nhật state cha
+      onBack(); // Quay lại trang danh sách
+      
+    } catch (error: any) {
+      console.error("API Error:", error);
+      toast.error(`Lưu thất bại: ${error.message}`);
+    } finally {
+      setIsSaving(false); // Kết thúc loading
+    }
   };
 
   return (
@@ -391,9 +449,11 @@ const handleSaveBtn = () => {
         </div>
         <button
           onClick={handleSaveBtn}
-          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center"
+          disabled={isSaving}
+          className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center"
         >
-          <Save size={18} className="mr-2" /> Lưu Lại
+          {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save size={18} className="mr-2" />} 
+          {isSaving ? "Đang lưu..." : "Lưu Lại"}
         </button>
       </div>
 

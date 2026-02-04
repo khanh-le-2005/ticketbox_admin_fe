@@ -371,7 +371,7 @@ export const getCustomerDetailWithHistory = async (
 
 // Hàm xóa khách hàng
 export const deleteCustomer = (id: string) => {
-  return axiosClient.delete(`/api/customers/${id}`);
+  return axiosClient.delete(`/customers/${id}`);
 };
 
 export const deleteCompany = deleteUser;

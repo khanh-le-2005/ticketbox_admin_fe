@@ -70,7 +70,9 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
       failedQueue.push({ resolve, reject });
     })
       .then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
         return axiosClient(originalRequest);
       })
       .catch((err) => Promise.reject(err));
@@ -81,27 +83,32 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
 
   try {
     const refreshToken = localStorage.getItem("refreshToken");
-    // console.log("AxiosClient: Starting refresh. Found refreshToken in localStorage:", !!refreshToken);
+    console.log("AxiosClient: Starting refresh. Found refreshToken in localStorage:", !!refreshToken);
 
     if (!refreshToken) {
       throw new Error("No refresh token available");
     }
 
     // Gọi API Refresh
-    const res = await axios.post(`${BASE_URL}/auth/refresh-token`, {
-      refreshToken,
-    });
+    // Lưu ý: Đảm bảo payload khớp với Backend yêu cầu
+    const res = await axios.post(`${BASE_URL}/auth/refresh-token`,
+      { refreshToken },
+      { headers: { "Content-Type": "application/json" } }
+    );
 
     // console.log("AxiosClient: Refresh API response:", res.data);
+    // console.log("REFRESH STATUS:", res.status);
+    // console.log("REFRESH DATA:", res.data);
+    // console.log("REFRESH HEADERS:", res.headers);
 
-    // Cấu trúc response tùy backend
-    // Check both potential paths
-    const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
+
+    // Cấu trúc response tùy backend (Data có thể nằm ở data.data hoặc data)
+    const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken || res.data?.token;
     const newRefreshToken = res.data?.data?.refreshToken || res.data?.refreshToken;
 
     if (!newAccessToken) {
       console.error("AxiosClient: No access token in refresh response.", res.data);
-      throw new Error("Không lấy được access token mới");
+      throw new Error("Không lấy được access token mới từ phản hồi API");
     }
 
     console.log("AxiosClient: Refresh success. Updating tokens.");
@@ -119,68 +126,130 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
     processQueue(null, newAccessToken);
 
     // Gọi lại request ban đầu bị lỗi
-    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+    if (originalRequest.headers) {
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+    }
     return axiosClient(originalRequest);
 
-  } catch (refreshError) {
-    // console.error("AxiosClient: Refresh failed.", refreshError);
+  } catch (refreshError: any) {
+    console.error("AxiosClient: Refresh failed.", refreshError);
     // Nếu refresh thất bại -> Hủy toàn bộ hàng đợi & Logout
     processQueue(refreshError, null);
-    return handleLogout("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+
+    const msg = refreshError?.response?.data?.message || "Phiên đăng nhập đã hết hạn (Lỗi gia hạn)";
+    return handleLogout(msg);
   } finally {
     isRefreshing = false;
   }
 };
 
 /* ================== RESPONSE INTERCEPTOR ================== */
+// axiosClient.interceptors.response.use(
+//   async (response) => {
+//     // Trả về data trực tiếp
+//     const resData = response.data;
+//     const originalRequest = response.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+//     // Dựa vào thông báo: "Token đã hết hạn. Vui lòng đăng nhập lại." hoặc code lỗi trong body
+//     if (
+//       resData &&
+//       (resData.success === false || resData.status === 401) &&
+//       (
+//         resData.message?.toLowerCase().includes("token") ||
+//         resData.message?.toLowerCase().includes("hết hạn") ||
+//         resData.message?.toLowerCase().includes("expired") ||
+//         resData.message?.includes("phiên đăng nhập")
+//       ) &&
+//       !originalRequest._retry
+//     ) {
+//       console.log("AxiosClient: 200 OK but payload says Token expired. Attempting refresh...");
+//       return handleRefreshToken(originalRequest);
+//     }
+
+//     return resData;
+//   },
+
+//   async (error: AxiosError) => {
+//     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+//     // Nếu lỗi không có response (mất mạng) hoặc không có status
+//     if (!error.response) {
+//       // Chỉ toast nếu không phải là lỗi cancel
+//       if (error.code !== "ERR_CANCELED") {
+//         toast.error("Lỗi kết nối mạng hoặc Server không phản hồi");
+//       }
+//       return Promise.reject(error);
+//     }
+
+//     const status = error.response.status;
+//     const msg = (error.response.data as any)?.message || "";
+
+//     // ⛔ TRƯỜNG HỢP 1: Token hết hạn (401)
+//     // Hoặc 403 mà message báo expired (đề phòng backend trả sai status)
+//     if (
+//       (status === 401 || (status === 403 && msg.toLowerCase().includes("expired"))) &&
+//       !originalRequest._retry
+//     ) {
+//       console.log(`AxiosClient: ${status} detected (Msg: ${msg}). Attempting refresh...`);
+//       return handleRefreshToken(originalRequest);
+//     }
+
+//     // ⛔ TRƯỜNG HỢP 2: Không có quyền (403) thực sự
+//     if (status === 403) {
+//       toast.error("Bạn không có quyền truy cập tài nguyên này", {
+//         toastId: 'error-403' // Ngăn chặn duplicate toast
+//       });
+//     }
+
+//     return Promise.reject(error);
+//   }
+// );
 axiosClient.interceptors.response.use(
-  async (response) => {
-    // Trả về data trực tiếp
-    const resData = response.data;
-    const originalRequest = response.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    // ⛔ TRƯỜNG HỢP NEW: Backend trả về 200 OK nhưng payload báo Token hết hạn
-    // Dựa vào thông báo: "Token đã hết hạn. Vui lòng đăng nhập lại."
-    if (
-      resData &&
-      resData.success === false &&
-      (resData.message?.includes("Token đã hết hạn") || resData.message?.includes("phiên đăng nhập")) &&
-      !originalRequest._retry
-    ) {
-      console.log("AxiosClient: 200 OK but payload says Token expired. Attempting refresh...");
-      return handleRefreshToken(originalRequest);
-    }
-
-    return resData;
+  (response) => {
+    // Luôn trả data
+    return response.data;
   },
-
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-    // Nếu lỗi không có response (mất mạng) hoặc không có status
+    // Không có response (mất mạng)
     if (!error.response) {
-      toast.error("Lỗi kết nối mạng hoặc Server không phản hồi");
+      if (error.code !== "ERR_CANCELED") {
+        toast.error("Lỗi kết nối mạng hoặc Server không phản hồi");
+      }
       return Promise.reject(error);
     }
 
     const status = error.response.status;
+    const msg = ((error.response.data as any)?.message || "").toLowerCase();
 
-    // ⛔ TRƯỜNG HỢP 1: Token hết hạn (401)
+    // Nếu lỗi từ API refresh-token → logout luôn
+    if (originalRequest.url?.includes("/auth/refresh-token")) {
+      return handleLogout("Phiên đăng nhập đã hết hạn");
+    }
+
+    // CASE 1: AccessToken hết hạn → REFRESH
     if (status === 401 && !originalRequest._retry) {
-      console.log("AxiosClient: 401 Unauthorized detected. Attempting refresh...");
+      originalRequest._retry = true;
+      console.log("AxiosClient: 401 detected → refreshing token");
       return handleRefreshToken(originalRequest);
     }
 
-    // ⛔ TRƯỜNG HỢP 2: Không có quyền (403) - Ví dụ User vào trang Admin
+    // CASE 2: Không có quyền thật sự
     if (status === 403) {
       toast.error("Bạn không có quyền truy cập tài nguyên này", {
-        toastId: 'error-403' // Ngăn chặn duplicate toast
+        toastId: "error-403",
       });
     }
 
     return Promise.reject(error);
   }
+
 );
+
+
 
 /* ================== LOGOUT HANDLER ================== */
 let isLoggingOut = false;
@@ -193,16 +262,24 @@ const handleLogout = (message: string) => {
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
 
-  toast.error(message, {
-    position: "top-right",
-    autoClose: 2000,
-  });
 
-  // Đợi 1 chút để user đọc thông báo rồi mới chuyển trang
+  // Xử lý conflict thư viện toast nếu cần, hoặc dùng alert fallback logic
+  try {
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 1500,
+    });
+  } catch (e) {
+    console.error("Toast failed, using alert", e);
+    // fallback nếu toast lỗi
+  }
+
+  // Đao bảo chuyển trang
   setTimeout(() => {
     isLoggingOut = false;
-    window.location.href = "/login";
-  }, 1500);
+    // Sử dụng replace để user không back lại được
+    window.location.replace("/login");
+  }, 1000); // Giảm xuống 1s cho nhanh hơn
 
   return Promise.reject(new Error(message));
 };

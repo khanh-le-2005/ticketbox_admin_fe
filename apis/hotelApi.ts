@@ -247,7 +247,14 @@ const hotelApi = {
     size?: number;
   }) => {
     return axiosClient.get("/hotel-bookings/filter", { params });
-  }
+  },
+
+  getHousekeepingTasks: (hotelId: string) => {
+    return axiosClient.get(`/api/housekeeping/tasks`, {
+      params: { hotelId }
+    });
+  },
+
 };
 
 export default hotelApi;  

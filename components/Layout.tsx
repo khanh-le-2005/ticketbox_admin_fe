@@ -2,6 +2,7 @@ import React, { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { HiOutlineGlobeAlt, HiOutlineMenu } from "react-icons/hi";
+import NotificationSystem from "@/pages/Admin/Notification/NotificationSystem";
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,8 +26,8 @@ const Layout: React.FC = () => {
       >
         {/* Header */}
         <header className="h-16 bg-white border-b border-gray-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-40">
+          {/* Nhóm bên trái: Nút Menu + Tiêu đề */}
           <div className="flex items-center gap-4">
-            {/* Nút 3 gạch */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 rounded-lg hover:bg-gray-100 transition"
@@ -38,14 +39,17 @@ const Layout: React.FC = () => {
               Bảng Điều Khiển Quản Trị
             </h2>
           </div>
-
-          <a
-            href="#"
-            className="flex items-center gap-2 text-rose-500 hover:text-rose-600 transition-colors font-medium text-sm"
-          >
-            Xem Trang Chủ
-            <HiOutlineGlobeAlt size={18} />
-          </a>
+          
+          <div className="flex items-center gap-6">
+            <a
+              href="#"
+              className="flex items-center gap-2 text-rose-500 hover:text-rose-600 transition-colors font-medium text-sm"
+            >
+              Xem Trang Chủ
+              <HiOutlineGlobeAlt size={18} />
+            </a>
+            <NotificationSystem />
+          </div>
         </header>
 
         {/* Page Content */}

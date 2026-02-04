@@ -46,9 +46,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ================== PROVIDER ==================
+// ... các phần import và interface giữ nguyên
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+
+  // Danh sách các role được phép truy cập
+  const allowedRoles = ['ADMIN', 'VAN_HANH', 'QUET_VE'];
 
   useEffect(() => {
     // Khôi phục user từ localStorage khi load trang
@@ -56,10 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const savedUser = localStorage.getItem("user");
       if (savedUser) {
         const parsedUser = JSON.parse(savedUser);
-        if (parsedUser.role === 'ADMIN') {
+        
+        // CẬP NHẬT: Kiểm tra nếu role nằm trong danh sách cho phép
+        if (allowedRoles.includes(parsedUser.role)) {
           setUser(parsedUser);
         } else {
-          // Nếu không phải ADMIN thì xóa sạch storage
+          // Nếu không thuộc các role cho phép thì xóa sạch storage
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
@@ -77,40 +84,84 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ================== LOGIN ==================
   const login = async (email: string, pass: string): Promise<boolean> => {
     try {
-      // Gọi API Login
-      // Lưu ý: axiosClient ở trên response interceptor trả về `response.data`, 
-      // nên ở đây biến resData chính là body của json trả về
-      const resData = await axiosClient.post<any, LoginResponse>("/auth/login", {
-        email,
-        password: pass,
-      });
+      const resData: any = await axiosClient.post("/auth/login", { email, password: pass });
 
-      if (!resData?.data?.accessToken) {
-        throw new Error(resData.message || "Đăng nhập thất bại (Không có token)");
+      if (resData.success === false) {
+        throw new Error(resData.message);
       }
 
-      // Tách token và thông tin user
-      const { accessToken, refreshToken, ...userInfo } = resData.data;
+      const authData = resData.data;
 
-      // Kiểm tra quyền ADMIN
-      if (userInfo.role !== 'ADMIN') {
-        throw new Error("Bạn không có quyền truy cập trang quản trị.");
+      if (!authData?.access_token) {
+        throw new Error(resData.message || "Đăng nhập thất bại");
+      }
+
+      const { access_token, refresh_token, ...userInfo } = authData;
+
+      // CẬP NHẬT: Kiểm tra quyền với danh sách ALLOWED_ROLES
+      if (! allowedRoles.includes(userInfo.role)) {
+        throw new Error("Bạn không có quyền truy cập vào hệ thống này.");
       }
 
       // Lưu vào LocalStorage
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("accessToken", access_token);
+      localStorage.setItem("refreshToken", refresh_token);
       localStorage.setItem("user", JSON.stringify(userInfo));
 
       // Cập nhật State
       setUser(userInfo);
       return true;
+
     } catch (error: any) {
-      // Error message đã được xử lý bởi axios hoặc trả về raw
       const msg = error.response?.data?.message || error.message || "Đăng nhập thất bại";
       throw new Error(msg);
     }
   };
+
+  // ... các phần logout và return giữ nguyên
+  // ================== LOGIN ==================
+  // const login = async (email: string, pass: string): Promise<boolean> => {
+  //   try {
+  //     // Ép kiểu resData thành any để truy cập mọi thuộc tính
+  //     const resData: any = await axiosClient.post("/auth/login", { email, password: pass });
+
+  //     if (resData.success === false) {
+  //       throw new Error(resData.message);
+  //     }
+
+  //     // 1. SỬA Ở ĐÂY: Truy cập vào data và dùng đúng tên access_token
+  //     const authData = resData.data; // Lấy object bên trong "data"
+
+  //     if (!authData?.access_token) {
+  //       // Nếu không có token, ném message lỗi từ backend (nếu có) hoặc câu mặc định
+  //       throw new Error(resData.message || "Đăng nhập thất bại");
+  //     }
+
+  //     // 2. Tách dữ liệu từ authData (access_token, refresh_token và các thông tin còn lại)
+  //     const { access_token, refresh_token, ...userInfo } = authData;
+
+  //     // 3. Kiểm tra quyền (như bạn đã làm)
+  //     const allowedRoles = ['ADMIN', 'VAN_HANH'];
+  //     if (!allowedRoles.includes(userInfo.role)) {
+  //       throw new Error("Bạn không có quyền truy cập trang quản trị.");
+  //     }
+
+  //     // 4. Lưu vào LocalStorage (Lưu ý đổi tên biến khi lưu nếu muốn đồng bộ)
+  //     localStorage.setItem("accessToken", access_token);
+  //     localStorage.setItem("refreshToken", refresh_token);
+  //     localStorage.setItem("user", JSON.stringify(userInfo));
+
+  //     // Cập nhật State
+  //     setUser(userInfo);
+  //     return true; // Trả về true để LoginPage biết là đã thành công
+
+  //   } catch (error: any) {
+  //     // Nếu là lỗi do mình "throw" ở trên, nó sẽ giữ nguyên message
+  //     // Nếu là lỗi từ axios (401, 500...), lấy message từ server trả về
+  //     const msg = error.response?.data?.message || error.message || "Đăng nhập thất bại";
+  //     throw new Error(msg);
+  //   }
+  // };
 
   // ================== LOGOUT ==================
   const logout = () => {

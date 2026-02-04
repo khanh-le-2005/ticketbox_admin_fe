@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       </div>
     );
   }
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || !['ADMIN', 'VAN_HANH', 'QUET_VE'].includes(user.role)) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   return <>{children}</>;

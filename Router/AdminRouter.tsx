@@ -31,6 +31,9 @@ import HotelDashboard from "@/pages/Admin/Hotel/HotelDashboard";
 import DailyDepartures from "@/pages/Admin/Hotel/DailyDepartures";
 import ManualBookingPage from "@/pages/Admin/Hotel/ManualBookingPage";
 import HotelGanttChart from "@/pages/Admin/Hotel/HotelGanttChart";
+import HotelAvailability from "@/pages/Admin/Statistical/HotelAvailability";
+import NotificationSystem from "@/pages/Admin/Notification/NotificationSystem";
+import NotificationPage from "@/pages/Admin/Notification/NotificationPage";
 
 const AdminRouter = () => {
   return (
@@ -52,7 +55,7 @@ const AdminRouter = () => {
         <Route path="/design/:id" element={<StageDesignerPage />} />
         {/* Trang Check-in: Theo ID */}
         <Route path="/checkin/:id" element={<StageCheckInPage />} />
-        
+
         {/* Quản lý Khách sạn */}
         <Route path="hotels/dashboard" element={<HotelDashboard />} />
         <Route index element={<Navigate to="/admin/hotels" replace />} />
@@ -64,10 +67,15 @@ const AdminRouter = () => {
         <Route path="cleanroom" element={<CleanRoomAction />} />
         <Route path="hotels/DailyDepartures" element={<DailyDepartures />} />
         <Route path="hotels/BookingByDate" element={<BookingByDate />} />
-        <Route path="hotels/ManualBookingPage" element={<ManualBookingPage />} />
-        <Route path="hotels/HotelGanttChart" element={<HotelGanttChart />} />
+        {/* <Route path="hotels/ManualBookingPage" element={<ManualBookingPage />} /> */}
+        {/* <Route path="hotels/HotelGanttChart" element={<HotelGanttChart />} /> */}
+        <Route path="hotels/HotelManagement" element={<HotelManagement />} />
+        <Route path="hotels/manual-booking" element={<ManualBookingPage />} /> {/* Sửa ở đây */}
+        <Route path="hotels/gantt-chart" element={<HotelGanttChart />} />
+        {/* {bảng thống kê khách sạn} */}
+        <Route path="statistical/HotelAvailability" element={<HotelAvailability />} />
 
-        
+
         {/* Quản lý Phòng */}
         <Route path="/rooms" element={<RoomManagementPage />} />
         <Route path="/rooms/create" element={<CreateRoomPage />} />
@@ -78,6 +86,10 @@ const AdminRouter = () => {
 
         <Route path="users/customers" element={<CustomerManagement />} />
         <Route path="users/customers/detail/:id" element={<CustomerDetail />} />
+
+        {/* thông báo */}
+        <Route path="NotificationSystem" element={<NotificationSystem />} />
+        <Route path="NotificationPage" element={<NotificationPage />} />
 
         <Route
           path="/admin/companies"

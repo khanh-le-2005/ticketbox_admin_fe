@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 
 const LoginPage: React.FC = () => {
@@ -11,45 +11,69 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Logic: Nếu User bị redirect từ một trang khác tới Login, sau khi Login xong sẽ quay lại trang đó.
-  // Nếu truy cập thẳng Login, mặc định về / (Trang chủ)
   const from = location.state?.from?.pathname || '/';
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError('');
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     // Gọi API Login
+  //     const success = await login(email, password);
+
+  //     if (success) {
+  //       // Chuyển hướng
+  //       navigate(from, { replace: true });
+  //     } else {
+  //       setError('Email hoặc mật khẩu không chính xác.');
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Login Error:", err);
+  //     const message = err.response?.data?.message || err.message || 'Đăng nhập thất bại.';
+  //     setError(message);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      // Gọi API Login
       const success = await login(email, password);
-      
+
       if (success) {
-        // Chuyển hướng
-        navigate(from, { replace: true });
-      } else {
-        setError('Email hoặc mật khẩu không chính xác.');
+        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        if (from === '/') {
+          if (['ADMIN', 'VAN_HANH', 'QUET_VE'].includes(savedUser.role)) {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        } else {
+          // Nếu user đang cố vào một link cụ thể trước đó, trả họ về link đó
+          navigate(from, { replace: true });
+        }
       }
     } catch (err: any) {
       console.error("Login Error:", err);
-      const message = err.response?.data?.message || err.message || 'Đăng nhập thất bại.';
-      setError(message);
+      setError(err.message || 'Đăng nhập thất bại.');
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 border border-gray-100">
         <div className="flex flex-col items-center mb-10">
           <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-pink-500/30 mb-4 rotate-3">
-             <HiOutlineLockClosed size={32} />
+            <HiOutlineLockClosed size={32} />
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900">Chào mừng trở lại</h1>
           <p className="text-gray-500 mt-2 text-center">Đăng nhập hệ thống momangshow</p>
@@ -66,7 +90,7 @@ const LoginPage: React.FC = () => {
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-700 ml-1">Địa chỉ Email</label>
             <div className="relative group">
-              <HiOutlineMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors" size={20} />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"><HiOutlineMail size={20} /></span>
               <input
                 type="email"
                 required
@@ -81,7 +105,7 @@ const LoginPage: React.FC = () => {
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-700 ml-1">Mật khẩu</label>
             <div className="relative group">
-              <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors" size={20} />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"><HiOutlineLockClosed size={20} /></span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 required

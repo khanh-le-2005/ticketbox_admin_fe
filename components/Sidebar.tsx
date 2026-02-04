@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { GiPodium } from "react-icons/gi";
-import { MdLogin } from "react-icons/md";
 import {
   HiOutlineViewGrid,
   HiOutlineNewspaper,
@@ -10,7 +9,8 @@ import {
   HiOutlineTicket,
   HiOutlineUsers,
 } from "react-icons/hi";
-import { FaHotel } from "react-icons/fa";
+import { AiFillSignal } from "react-icons/ai";
+import { FaHotel, FaBell } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MenuItem, SidebarProps } from "@/type/api_types";
@@ -44,17 +44,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       icon: <FaHotel size={22} />,
       children: [
         { label: "Dashboard", path: "/hotels/dashboard" },
-        { label: "Danh sách khách sạn", path: "/hotels" },
+        { label: "Quản lý khách sạn", path: "/hotels/HotelManagement" },
         { label: "Quản lý phòng", path: "/rooms" },
         { label: "Check-in / Check-out", path: "/CheckAction" },
         { label: "Dọn phòng", path: "/cleanroom" },
         { label: "Danh sách booking", path: "/hotels/BookingByDate" },
         { label: "Danh sách Trả Phòng ", path: "/hotels/DailyDepartures" },
         { label: "Danh sách Khách Đến ", path: "/hotels/DailyArrivals" },
-        { label: "Đặt phòng thủ công", path: "/hotels/ManualBookingPage" },
-        { label: "Biểu đồ Gantt", path: "/hotels/HotelGanttChart" },
+        { label: "Đặt phòng thủ công", path: "/hotels/manual-booking" },
+        { label: "Biểu đồ Gantt", path: "/hotels/gantt-chart" },
       ],
     },
+    
+    {
+      label: "Thống kê",
+      icon: <AiFillSignal size={22} />,
+      children: [
+        { label: "Thống kê khách sạn", path: "/Statistical/HotelAvailability" },
+      ],
+    },
+
     {
       label: "Người dùng",
       icon: <HiOutlineUsers size={22} />,
@@ -64,6 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         { label: "Khách hàng", path: "/users/customers" },
       ],
     },
+
     {
       label: "Quản lý Tin tức",
       path: "/news",
@@ -78,6 +88,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       label: "Quản lý sân khấu",
       path: "/stage",
       icon: <GiPodium size={22} />,
+    },
+    {
+      label: "Quản lý thông báo",
+      path: "/NotificationPage",
+      icon: <FaBell size={22} />,
     },
   ];
 

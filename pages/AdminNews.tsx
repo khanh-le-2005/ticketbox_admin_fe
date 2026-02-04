@@ -16,6 +16,7 @@ import { getImageUrl } from '../apis/api_image';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
+
 // =================================================================
 // CUSTOM ANIMATIONS
 // =================================================================
@@ -73,9 +74,12 @@ const AdminNews: React.FC = () => {
     try {
       const data = await getAllArticles();
       setArticles(data);
-    } catch (err) {
-      setError('Không thể tải dữ liệu từ Server. Vui lòng kiểm tra console.');
-      toast.error('Lỗi khi tải danh sách bài viết.');
+    } catch (err: any) {
+      console.error("Fetch Articles Error:", err);
+      // Lấy thông báo lỗi chi tiết để hiển thị
+      const msg = err?.response?.data?.message || err?.message || 'Không thể tải dữ liệu từ Server.';
+      setError(`${msg} (Check Console for details)`);
+      toast.error(`Lỗi: ${msg}`);
     } finally {
       setLoading(false);
     }
