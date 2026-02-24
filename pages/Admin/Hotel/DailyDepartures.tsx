@@ -89,46 +89,41 @@ const DailyDepartures: React.FC = () => {
     }, [dateOption]);
 
     // --- 2. FETCH DATA ---
-const fetchDepartures = useCallback(async () => {
-  if (!checkOutFrom || !checkOutTo) return;
+    const fetchDepartures = useCallback(async () => {
+        if (!checkOutFrom || !checkOutTo) return;
 
-  setLoading(true);
-  try {
-    console.log(`📡 Đang gọi API Departures: ${checkOutFrom} đến ${checkOutTo}`);
+        setLoading(true);
+        try {
+            console.log(`📡 Đang gọi API Departures: ${checkOutFrom} đến ${checkOutTo}`);
 
-    const token = localStorage.getItem("accessToken");
+            const response = await axiosClient.get(
+                "/hotel-bookings/filter",
+                {
+                    params: {
+                        checkOutFrom,
+                        checkOutTo,
+                        hotelId, // nếu backend hỗ trợ
+                    },
+                }
+            );
 
-    const response = await axiosClient.get(
-      "/hotel-bookings/filter",
-      {
-        params: {
-          checkOutFrom,
-          checkOutTo,
-          hotelId, // nếu backend hỗ trợ
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+            const resData = response.data;
 
-    const resData = response.data;
+            console.log("📦 Data nhận được:", resData);
 
-    console.log("📦 Data nhận được:", resData);
-
-    if (resData != null) {
-      setRawData(resData);
-    } else {
-      setRawData([]);
-      toast.info(resData?.message || "Không tìm thấy dữ liệu trả phòng");
-    }
-  } catch (error) {
-    console.error("❌ Lỗi API Departures:", error);
-    toast.error("Không thể tải danh sách trả phòng.");
-  } finally {
-    setLoading(false);
-  }
-}, [hotelId, checkOutFrom, checkOutTo]);
+            if (resData != null) {
+                setRawData(resData);
+            } else {
+                setRawData([]);
+                toast.info(resData?.message || "Không tìm thấy dữ liệu trả phòng");
+            }
+        } catch (error) {
+            console.error("❌ Lỗi API Departures:", error);
+            toast.error("Không thể tải danh sách trả phòng.");
+        } finally {
+            setLoading(false);
+        }
+    }, [hotelId, checkOutFrom, checkOutTo]);
 
 
 

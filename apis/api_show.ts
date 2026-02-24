@@ -7,7 +7,6 @@ const IMAGE_BASE_URL = "https://api.momangshow.vn/api/images";
 export const showApi = {
   // 1. Lấy danh sách Show
   getAllShows: async (params?: any): Promise<IShow[]> => {
-    // Gọi: {{base_url}}/shows
     // API có thể trả về một page object (ShowListResponse) hoặc một mảng IShow[] trực tiếp.
     const response = await axiosClient.get<ShowListResponse | IShow[]>(
       "/shows",

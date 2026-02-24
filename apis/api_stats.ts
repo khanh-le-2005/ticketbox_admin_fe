@@ -1,4 +1,4 @@
-import axiosClient from '../axiosclient';
+import axiosClient from '@/axiosclient';
 import { DashboardStatResponse, RevenueChartResponse } from '@/type/stats.type';
 export type { DashboardStatResponse, RevenueChartResponse };
 /**

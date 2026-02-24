@@ -359,29 +359,11 @@ const StageDesigner: React.FC<StageDesignerProps> = ({ initialData, onSave, onBa
         lastModified: new Date().toISOString(),
       };
 
-      // 2. Lấy Token từ LocalStorage (Sửa key nếu bạn dùng key khác)
-      const token = localStorage.getItem("accessToken"); 
-      
-      if (!token) {
-        toast.warn("Cảnh báo: Không tìm thấy Token đăng nhập");
-      }
-
-      const response = await fetch(`${axiosClient.defaults.baseURL}/stages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(finalData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Lỗi khi lưu dữ liệu");
-      }
+      // 2. Gọi API bằng axiosClient (Tự động đính token)
+      // axiosClient được cấu hình để trả về data trực tiếp (response.data)
+      await axiosClient.post('/stages', finalData);
 
       // 4. Thành công
-      const result = await response.json();
       toast.success("Đã lưu thiết kế thành công!");
       
       onSave(finalData); // Cập nhật state cha

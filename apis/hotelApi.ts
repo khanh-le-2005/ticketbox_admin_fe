@@ -132,7 +132,8 @@ import { HotelDashboardData } from "@/type/hotel.type";
 import { BASE_API_URL } from "./api_base";
 
 const hotelApi = {
-  getAll: () => axiosClient.get<ApiResponse<PageableResponse<Hotel>>>("/hotels"),
+  getAll: (params?: { page?: number; size?: number; keyword?: string }) =>
+    axiosClient.get<ApiResponse<PageableResponse<Hotel>>>("/hotels", { params }),
 
   getById: (id: string) => axiosClient.get<ApiResponse<Hotel>>(`/hotels/${id}`),
 

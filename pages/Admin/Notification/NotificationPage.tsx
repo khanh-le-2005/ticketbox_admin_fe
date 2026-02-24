@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosClient from '@/axiosclient';
 import {
     Bell, Search, Filter, Trash2, CheckCircle,
-    Info, XCircle, Loader2, Calendar, User, CreditCard, MapPin
+    Info, XCircle, Loader2, Calendar, User, CreditCard, MapPin, Copy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +10,27 @@ const NotificationPage = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
+
+    // Helper: Render content with truncated code
+    const renderContent = (content: string) => {
+        if (!content) return "";
+        const regex = /(.*?Mã:\s*)([a-zA-Z0-9]+)(.*)/;
+        const match = content.match(regex);
+        if (match) {
+            const [_, prefix, code, suffix] = match;
+            const shortCode = code.length > 8 ? code.substring(0, 8) + "..." : code;
+            return (
+                <span>
+                    {prefix}
+                    <span className="font-bold text-gray-700 cursor-help" title={code}>
+                        {shortCode}
+                    </span>
+                    {suffix}
+                </span>
+            );
+        }
+        return content;
+    };
 
     // State Modal
     const [selectedBooking, setSelectedBooking] = useState(null);
@@ -23,7 +44,8 @@ const NotificationPage = () => {
         setLoading(true);
 
         try {
-            const res = await axiosClient.get('/notifications?page=0&size=50');
+            const res: any = await axiosClient.get('/notifications?page=0&size=50');
+            // const res = await axiosClient.get('/notifications?page=0&size=50');
             setNotifications(res.content || res.data || []);
         } catch (error) {
             console.error("Lỗi tải thông báo:", error);
@@ -111,6 +133,18 @@ const NotificationPage = () => {
         }
     };
 
+    // Helper: Extract booking code from content
+    const extractBookingCode = (content) => {
+        if (!content) return null;
+        const match = content.match(/Mã:\s*([a-zA-Z0-9]+)/);
+        return match ? match[1] : null;
+    };
+
+    const handleCopyCode = (code) => {
+        navigator.clipboard.writeText(code);
+        alert(`Đã sao chép mã: ${code}`);
+    };
+
     return (
         <div className="p-6 max-w-6xl mx-auto min-h-screen bg-gray-50/50">
             {/* Header & Filter giữ nguyên */}
@@ -154,7 +188,7 @@ const NotificationPage = () => {
                                         <h3 className={`text-base ${!notif.read ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>{notif.title}</h3>
                                         <span className="text-xs text-gray-400">{new Date(notif.createdAt).toLocaleString('vi-VN')}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-1 mb-3">{notif.content}</p>
+                                    <p className="text-sm text-gray-500 mt-1 mb-3">{renderContent(notif.content)}</p>
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => handleShowDetail(notif)}
@@ -162,6 +196,15 @@ const NotificationPage = () => {
                                         >
                                             {isDetailLoading ? <Loader2 size={14} className="animate-spin" /> : <Info size={16} />} Xem chi tiết
                                         </button>
+                                        {extractBookingCode(notif.content) && (
+                                            <button
+                                                onClick={() => handleCopyCode(extractBookingCode(notif.content))}
+                                                className="text-sm font-bold text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                                                title="Sao chép mã phòng"
+                                            >
+                                                <Copy size={16} /> Copy Mã
+                                            </button>
+                                        )}
                                         <button className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1"><Trash2 size={16} /> Xóa</button>
                                     </div>
                                 </div>

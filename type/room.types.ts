@@ -120,3 +120,11 @@ export interface DashboardData {
   dirty: DashboardGroup;
   maintenance: DashboardGroup;
 }
+
+export interface ActiveBooking {
+  id: string;
+  roomNumber: string;
+  customerName: string;
+  checkInDate: string;
+  checkOutDate: string;
+}

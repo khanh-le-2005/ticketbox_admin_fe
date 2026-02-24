@@ -51,7 +51,7 @@ interface BookingQueryResponse {
 // 1. Fetch Bookings (Đã cập nhật xử lý Page)
 const fetchBookings = async ({ queryKey }: any): Promise<BookingQueryResponse> => {
   const [_key, filter] = queryKey;
-  
+
   // Gọi API mới hỗ trợ phân trang
   const res = await axiosClient.get("/hotel-bookings/check-in/search", {
     params: {
@@ -65,7 +65,7 @@ const fetchBookings = async ({ queryKey }: any): Promise<BookingQueryResponse> =
   // Cấu trúc JSON: { data: { content: [...], totalPages: 5, ... } }
   const pageData = res?.data?.data || res?.data;
 
-  return { 
+  return {
     bookings: pageData?.content || [], // Lấy list từ .content
     totalPages: pageData?.totalPages || 0,
     totalElements: pageData?.totalElements || 0
@@ -104,7 +104,7 @@ const CheckAction: React.FC = () => {
     queryKey: ["bookings", filter],
     queryFn: fetchBookings,
     placeholderData: keepPreviousData, // Giữ dữ liệu cũ khi chuyển trang
-    staleTime: 5000, 
+    staleTime: 5000,
   });
 
   const bookings = data?.bookings || [];
@@ -152,7 +152,7 @@ const CheckAction: React.FC = () => {
       await axiosClient.post(`/hotel-bookings/${selectedBooking.id}/check-in`, {
         roomNumbers: [checkInRoomNumber],
       });
-      
+
       toast.success(`Check-in thành công phòng ${checkInRoomNumber}`);
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       setSelectedBooking(null);
@@ -216,11 +216,11 @@ const CheckAction: React.FC = () => {
   // ================= RENDER =================
   return (
     <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-1rem)] bg-gray-50 p-2 md:p-4 gap-4 overflow-hidden font-sans text-slate-800">
-      <ToastContainer position="top-center" autoClose={2000} />
+      <ToastContainer position="top-center" autoClose={2000} aria-label="Check-in actions notifications" />
 
       {/* --- LEFT PANEL: LIST --- */}
       <div className="w-full lg:w-1/3 lg:min-w-[350px] bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
-        
+
         {/* Header Search */}
         <div className="p-4 border-b border-gray-100">
           <div className="flex justify-between items-center mb-3">
@@ -249,16 +249,15 @@ const CheckAction: React.FC = () => {
           {bookings.length === 0 && !isFetching && (
             <div className="text-center text-gray-400 mt-10 text-sm">Không tìm thấy dữ liệu.</div>
           )}
-          
+
           {bookings.map((booking) => (
             <div
               key={booking.id}
               onClick={() => handleSelectBooking(booking)}
-              className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                selectedBooking?.id === booking.id
+              className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${selectedBooking?.id === booking.id
                   ? "bg-blue-50 border-blue-400 ring-1 ring-blue-300"
                   : "bg-white border-gray-100 hover:border-blue-200"
-              }`}
+                }`}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-3">
@@ -298,7 +297,7 @@ const CheckAction: React.FC = () => {
           >
             <ChevronLeft size={18} />
           </button>
-          
+
           <span className="font-medium text-gray-600">
             Trang {filter.page + 1} / {totalPages || 1}
           </span>
@@ -327,8 +326,8 @@ const CheckAction: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-bold text-slate-800">{selectedBooking.customerName}</h1>
               <p className="text-slate-500 text-sm mt-1">{selectedBooking.customerEmail}</p>
               <div className="mt-3 flex justify-center gap-3 text-sm text-slate-600">
-                 <span>📅 In: {selectedBooking.checkInDate}</span>
-                 <span>📅 Out: {selectedBooking.checkOutDate}</span>
+                <span>📅 In: {selectedBooking.checkInDate}</span>
+                <span>📅 Out: {selectedBooking.checkOutDate}</span>
               </div>
               <div className="mt-2"><StatusBadge status={selectedBooking.status} /></div>
             </div>

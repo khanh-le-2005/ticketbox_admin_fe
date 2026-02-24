@@ -114,17 +114,12 @@ const HotelBookingFilter: React.FC = () => {
       //   }
       // });
 
-      const token = localStorage.getItem("accessToken"); // hoặc lấy từ context/store
-
       const response = await axiosClient.get(
         "/hotel-bookings/filter",
         {
           params: {
             checkInFrom: fromDate,
             checkInTo: toDate,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
           },
         }
       );

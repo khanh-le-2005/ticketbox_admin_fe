@@ -1,7 +1,7 @@
 // api/roomApi.ts
 import { RoomInstancePayload, RoomType } from '@/type';
-import axiosClient from '../axiosclient'; // Đảm bảo đường dẫn đúng đến file axiosClient của bạn
-import { ApiResponse, RoomTypePayload, RoomTypeResponse } from '../type/room.types';
+import axiosClient from '@/axiosclient'; // Đảm bảo đường dẫn đúng đến file axiosClient của bạn
+import { ApiResponse, RoomTypePayload, RoomTypeResponse } from '@/type/room.types';
 
 const roomApi = {
   // Lấy danh sách loại phòng của 1 khách sạn

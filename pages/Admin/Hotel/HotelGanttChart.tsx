@@ -881,9 +881,9 @@ export default function HotelGanttChart() {
                         end: contextMenu.end,
                         date: contextMenu.date,
                       },
-                      
+
                     });
-                    
+
 
                     setContextMenu(null);
                   }}

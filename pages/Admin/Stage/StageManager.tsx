@@ -8,8 +8,7 @@ import { StageData, Zone, Seat } from "@/type/Stage.type";
 import StageDesigner from "./StageDesigner";
 import StageCheckIn from "./StageCheckIn";
 
-// --- CẤU HÌNH API ---
-const API_BASE_URL = "https://api.momangshow.vn/api";
+import axiosClient from "@/axiosclient";
 
 // --- HÀM CHUẨN HÓA DỮ LIỆU (QUAN TRỌNG) ---
 // Giúp map dữ liệu từ Backend (có thể bị lệch) về đúng chuẩn Frontend
@@ -23,7 +22,7 @@ const normalizeStageData = (beData: any): StageData => {
       // Nếu width/height = 0 thì tính tạm để hiển thị được
       width: zone.width > 0 ? zone.width : (zone.isBox ? 150 : (zone.cols * 40 + (zone.cols - 1) * 6 + 24)),
       height: zone.height > 0 ? zone.height : (zone.isBox ? 150 : (zone.rows * 40 + (zone.rows - 1) * 6 + 24)),
-      
+
       seats: (zone.seats || []).map((seat: any) => ({
         ...seat,
         // Chuyển Type về chữ thường (Backend trả về VIP -> frontend cần vip)
@@ -42,7 +41,7 @@ const StageManagerApp = () => {
   // 1. Khởi tạo stages rỗng, sẽ fetch từ API sau
   const [stages, setStages] = useState<StageData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   const [view, setView] = useState<"list" | "design" | "checkin">("list");
   const [currentId, setCurrentId] = useState<string | null>(null);
 
@@ -50,35 +49,21 @@ const StageManagerApp = () => {
   const fetchStages = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        toast.error("Bạn chưa đăng nhập!");
-        setLoading(false);
-        return;
-      }
+      // Dùng axiosClient tự động đính token
+      const response = await axiosClient.get('/stages');
+      const data = response || []; // axiosClient trả về data trực tiếp
 
-      const response = await fetch(`${API_BASE_URL}/stages`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("Lỗi khi tải danh sách sân khấu");
-
-      const data = await response.json();
-      
       // Kiểm tra cấu trúc trả về (Array trực tiếp hoặc nằm trong .data)
-      const listRaw = Array.isArray(data) ? data : (data.data || []);
-      
+      const listRaw = Array.isArray(data) ? data : ((data as any).data || []);
+
       // Chuẩn hóa dữ liệu trước khi lưu vào State
       const cleanList = listRaw.map(normalizeStageData);
-      
+
       setStages(cleanList);
     } catch (error) {
       console.error("Fetch error:", error);
-      toast.error("Không thể tải dữ liệu sân khấu");
+      // Không cần toast lỗi ở đây nếu axiosClient đã toast, hoặc toast nhẹ
+      // toast.error("Không thể tải dữ liệu sân khấu");
     } finally {
       setLoading(false);
     }
@@ -128,19 +113,14 @@ const StageManagerApp = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_BASE_URL}/stages/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (!response.ok) throw new Error("Không thể xóa");
+      await axiosClient.delete(`/stages/${id}`);
 
       // Xóa thành công -> Cập nhật UI
       setStages(stages.filter((x) => x.id !== id));
       toast.success("Đã xóa sân khấu");
     } catch (error) {
-      toast.error("Lỗi khi xóa sân khấu");
+      console.error("Delete Error", error);
+      // toast.error("Lỗi khi xóa sân khấu"); // axiosClient có thể đã handle
     }
   };
 
@@ -153,8 +133,8 @@ const StageManagerApp = () => {
         initialData={targetStage}
         onSave={handleSaveAndExit}
         onBack={() => {
-            setView("list");
-            fetchStages(); // Refresh lại data khi quay về để chắc chắn đồng bộ
+          setView("list");
+          fetchStages(); // Refresh lại data khi quay về để chắc chắn đồng bộ
         }}
       />
     );
@@ -165,8 +145,8 @@ const StageManagerApp = () => {
         data={targetStage}
         onUpdate={handleUpdateDataOnly}
         onBack={() => {
-            setView("list");
-            fetchStages(); // Refresh lại data checkin mới nhất
+          setView("list");
+          fetchStages(); // Refresh lại data checkin mới nhất
         }}
       />
     );
@@ -192,34 +172,34 @@ const StageManagerApp = () => {
             </p>
           </div>
           <div className="flex gap-3">
-             <button 
-                onClick={fetchStages} 
-                className="bg-white text-indigo-600 px-4 py-3 rounded-2xl font-bold shadow hover:shadow-md transition-all flex items-center gap-2"
-                title="Tải lại dữ liệu"
-             >
-                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-             </button>
-             <button
-                onClick={() => {
-                  setCurrentId(null);
-                  setView("design");
-                }}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-200 active:scale-95 transition-all group"
-              >
-                <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
-                  <Plus className="w-5 h-5" />
-                </div>
-                Tạo Sân Khấu Mới
-              </button>
+            <button
+              onClick={fetchStages}
+              className="bg-white text-indigo-600 px-4 py-3 rounded-2xl font-bold shadow hover:shadow-md transition-all flex items-center gap-2"
+              title="Tải lại dữ liệu"
+            >
+              <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+            </button>
+            <button
+              onClick={() => {
+                setCurrentId(null);
+                setView("design");
+              }}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-200 active:scale-95 transition-all group"
+            >
+              <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
+                <Plus className="w-5 h-5" />
+              </div>
+              Tạo Sân Khấu Mới
+            </button>
           </div>
         </div>
 
         {/* LOADING STATE */}
         {loading ? (
-            <div className="flex flex-col items-center justify-center h-64">
-                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Đang tải dữ liệu từ server...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-64">
+            <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+            <p className="text-gray-500 font-medium">Đang tải dữ liệu từ server...</p>
+          </div>
         ) : (
           <>
             {/* Stats Overview */}
@@ -256,15 +236,15 @@ const StageManagerApp = () => {
                 {stages.map((s) => {
                   const safeZones = s.zones || [];
                   const total = safeZones.reduce((acc, z) => {
-                      const seats = z.seats || [];
-                      return acc + seats.filter((st) => st.type !== "blocked" && !z.isBox).length;
+                    const seats = z.seats || [];
+                    return acc + seats.filter((st) => st.type !== "blocked" && !z.isBox).length;
                   }, 0);
-                  
+
                   const checked = safeZones.reduce((acc, z) => {
-                      const seats = z.seats || [];
-                      return acc + seats.filter((st) => st.isOccupied).length;
+                    const seats = z.seats || [];
+                    return acc + seats.filter((st) => st.isOccupied).length;
                   }, 0);
-                  
+
                   const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
 
                   return (

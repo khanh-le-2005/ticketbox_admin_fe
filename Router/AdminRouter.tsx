@@ -34,6 +34,8 @@ import HotelGanttChart from "@/pages/Admin/Hotel/HotelGanttChart";
 import HotelAvailability from "@/pages/Admin/Statistical/HotelAvailability";
 import NotificationSystem from "@/pages/Admin/Notification/NotificationSystem";
 import NotificationPage from "@/pages/Admin/Notification/NotificationPage";
+import SpecialPriceManager from "@/pages/Admin/Hotel/SpecialPriceManager";
+import HotelWarehouse from "@/pages/Admin/Hotel/HotelWarehouse";
 
 const AdminRouter = () => {
   return (
@@ -72,6 +74,12 @@ const AdminRouter = () => {
         <Route path="hotels/HotelManagement" element={<HotelManagement />} />
         <Route path="hotels/manual-booking" element={<ManualBookingPage />} /> {/* Sửa ở đây */}
         <Route path="hotels/gantt-chart" element={<HotelGanttChart />} />
+        <Route path="hotels/special-price" element={<SpecialPriceManager />} />
+        <Route path="hotels/HotelWarehouse" element={<HotelWarehouse />} />
+
+
+
+
         {/* {bảng thống kê khách sạn} */}
         <Route path="statistical/HotelAvailability" element={<HotelAvailability />} />
 

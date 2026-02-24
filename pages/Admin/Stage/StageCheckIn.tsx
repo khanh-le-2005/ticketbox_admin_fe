@@ -61,8 +61,7 @@ const StageCheckIn: React.FC<StageCheckInProps> = ({ data, onUpdate, onBack }) =
 
     // 5. GỌI API PATCH NGẦM
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Chưa đăng nhập");
+      // Token tự động được axiosClient xử lý
 
       // URL: /api/stages/{stageId}/seats/{seatId}/status
       const url = `/stages/${data.id}/seats/${targetSeat.id}/status`;

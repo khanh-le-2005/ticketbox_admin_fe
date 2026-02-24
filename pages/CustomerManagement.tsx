@@ -17,6 +17,7 @@ import { toast } from 'react-toastify'; // 👈 Import Toast
 import { getAllCustomers, deleteCustomer, searchCustomers, Customer } from '../apis/api_user';
 import Swal from 'sweetalert2';
 
+
 const CustomerManagement: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);

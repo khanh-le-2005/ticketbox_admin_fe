@@ -3,7 +3,8 @@ import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import { useNavigate } from 'react-router-dom';
 import {
-  Bell, CheckCheck, DollarSign, XCircle, Info, Loader2
+  Bell, CheckCheck, DollarSign, XCircle, Info, Loader2,
+  Calendar, User, CreditCard, Copy
 } from 'lucide-react';
 import axiosClient from '@/axiosclient';
 
@@ -195,31 +196,95 @@ const NotificationSystem: React.FC = () => {
   //     console.error("Lỗi xử lý click thông báo:", error);
   //   }
   // };
+  // Sửa lại khai báo hàm nhận thêm tham số 'e'
   const handleClickItem = async (notif: Notification) => {
-    try {
-      setIsOpen(false); // Đóng dropdown thông báo
+    // 1. Log ngay khi click để xem sự kiện có bắt được không
+    console.log("🚀 [START] Đã click vào thông báo:", notif);
 
-      if (notif.targetUrl && notif.targetUrl.includes('/hotel-bookings/')) {
-        const bookingId = notif.targetUrl.split('/').pop();
-        if (bookingId) {
+    try {
+      setIsOpen(false); // Đóng dropdown
+
+      // Kiểm tra URL
+      console.log("🔍 [CHECK] Target URL:", notif.targetUrl);
+
+      const isBookingUrl = notif.targetUrl.includes('/bookings/');
+
+      if (isBookingUrl) {
+
+        // Cắt chuỗi để lấy ID
+        // Logic mới: Xóa dấu gạch chéo cuối cùng nếu có để tránh lỗi chuỗi rỗng
+        const cleanUrl = notif.targetUrl.replace(/\/+$/, '');
+        const bookingId = cleanUrl.split('/').pop();
+
+        if (bookingId && bookingId !== 'hotel-bookings') {
           setIsLoading(true);
+
           try {
             const res: any = await axiosClient.get(`/hotel-bookings/${bookingId}`);
-            setSelectedBooking({ ...res.data || res, notifId: notif.id, isRead: notif.read });
-            setIsModalOpen(true); // Mở Modal khi có dữ liệu
+
+            // Kiểm tra cấu trúc dữ liệu trước khi set state
+            const bookingData = res.data || res;
+
+            if (bookingData) {
+
+              setSelectedBooking({
+                ...bookingData,
+                notifId: notif.id,
+                isRead: notif.read
+              });
+              // Mở Modal
+              setIsModalOpen(true);
+            } else {
+              navigate(notif.targetUrl);
+            }
           } catch (apiErr) {
-            console.error("Lỗi lấy chi tiết:", apiErr);
+            // Nếu lỗi API thì chuyển trang thường
             navigate(notif.targetUrl);
           } finally {
             setIsLoading(false);
           }
+        } else {
+          navigate(notif.targetUrl);
         }
       } else {
-        // Logic cho các loại thông báo khác
         if (!notif.read) markAsRead(notif.id);
         if (notif.targetUrl) navigate(notif.targetUrl);
       }
-    } catch (error) { console.error(error); }
+    } catch (error) {
+    }
+  };
+
+  // --- Helpers ---
+  const formatCurrency = (val: any) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  };
+
+  const extractBookingCode = (content: string) => {
+    if (!content) return null;
+    const match = content.match(/Mã:\s*([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    alert(`Đã sao chép mã: ${code}`);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'CANCELLED': return <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold border border-red-200 uppercase">Đã hủy</span>;
+      case 'CHECKED_OUT': return <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold border border-gray-200 uppercase">Đã trả phòng</span>;
+      case 'CONFIRMED': return <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200 uppercase">Đã xác nhận</span>;
+      case 'PENDING': return <span className="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-[10px] font-bold border border-yellow-200 uppercase">Chờ thanh toán</span>;
+      default: return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">{status || 'ĐÃ XÁC NHẬN'}</span>;
+    }
   };
 
   // Hàm phụ để xử lý đánh dấu đã đọc
@@ -283,7 +348,7 @@ const NotificationSystem: React.FC = () => {
                       <div
                         key={notif.id}
                         className={`group relative flex p-4 hover:bg-gray-50 cursor-pointer transition-all gap-4 ${!notif.read ? 'bg-blue-50/30' : ''}`}
-                        onClick={() => handleClickItem(notif)} // Vẫn giữ click vào cả row để xem
+                        onClick={(e) => handleClickItem(notif, e)} // Vẫn giữ click vào cả row để xem
                       >
                         {/* Icon */}
                         <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${bg} ${color}`}>
@@ -308,18 +373,33 @@ const NotificationSystem: React.FC = () => {
                               {new Date(notif.createdAt).toLocaleString('vi-VN')}
                             </p>
 
-                            {/* NÚT XEM THÊM - CHỈ HIỆN KHI CÓ LINK BOOKING */}
-                            {/* {(notif.targetUrl?.includes('bookings') || notif.type === 'NEW_BOOKING') && (
-                              <button
-                                className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleClickItem(notif);
-                                }}
-                              >
-                                Xem thêm →
-                              </button>
-                            )} */}
+                            <div className="flex items-center gap-2">
+                              {extractBookingCode(notif.content) && (
+                                <button
+                                  className="text-[10px] font-bold text-gray-500 hover:text-gray-700 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyCode(extractBookingCode(notif.content)!);
+                                  }}
+                                  title="Sao chép mã phòng"
+                                >
+                                  <Copy size={12} /> Copy Mã
+                                </button>
+                              )}
+
+                              {/* NÚT XEM THÊM - CHỈ HIỆN KHI CÓ LINK BOOKING */}
+                              {(notif.targetUrl?.includes('bookings') || notif.type === 'NEW_BOOKING') && (
+                                <button
+                                  className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClickItem(notif, e);
+                                  }}
+                                >
+                                  Xem thêm →
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -330,7 +410,7 @@ const NotificationSystem: React.FC = () => {
             </div>
 
             <div className="p-3 border-t border-gray-50 bg-gray-50">
-              <button className="w-full py-2 text-xs font-semibold text-gray-600 hover:text-blue-600 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm" onClick={() => { setIsOpen(false); navigate('/notifications'); }}>
+              <button className="w-full py-2 text-xs font-semibold text-gray-600 hover:text-blue-600 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm" onClick={() => { setIsOpen(false); navigate('/notificationPage'); }}>
                 Xem tất cả thông báo
               </button>
             </div>
@@ -352,52 +432,132 @@ const NotificationSystem: React.FC = () => {
             </div>
 
             {/* Body - Hiển thị dữ liệu từ API hotel-bookings */}
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Mã đơn hàng</p>
-                  <p className="font-semibold text-blue-600">#{selectedBooking.id?.slice(-8).toUpperCase()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Trạng thái</p>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[11px] font-bold">
-                    {selectedBooking.status || 'ĐÃ XÁC NHẬN'}
+            <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
+              {/* Tên khách sạn & Trạng thái */}
+              <div className="mb-5 text-center">
+                <h2 className="text-lg font-bold text-blue-900 uppercase leading-snug">
+                  {selectedBooking.hotelName || 'THÔNG TIN ĐƠN HÀNG'}
+                </h2>
+                <div className="mt-2 flex justify-center items-center gap-2">
+                  {getStatusBadge(selectedBooking.status)}
+                  <span className="text-[10px] text-gray-400 px-2 py-1 bg-gray-50 rounded border border-gray-100">
+                    #{selectedBooking.id?.slice(-8).toUpperCase()}
                   </span>
                 </div>
-                <div className="col-span-2 border-t pt-2">
-                  <p className="text-gray-500">Khách hàng</p>
-                  <p className="font-medium">{selectedBooking.customerName || 'N/A'}</p>
+              </div>
+
+              {/* Tổng tiền */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex justify-between items-center">
+                <span className="text-xs font-medium text-blue-800 flex items-center gap-2">
+                  <CreditCard size={16} /> Tổng thanh toán
+                </span>
+                <span className="text-lg font-bold text-red-600">
+                  {formatCurrency(selectedBooking.totalAmount || 0)}
+                </span>
+              </div>
+
+              <div className="space-y-6">
+                {/* Thông tin khách hàng */}
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900 mb-3 border-b pb-1 flex items-center gap-2">
+                    <User size={14} className="text-gray-500" /> Khách hàng
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Họ và tên:</span>
+                      <span className="font-medium text-gray-900">{selectedBooking.customerName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Số điện thoại:</span>
+                      <span className="font-medium text-gray-900">{selectedBooking.customerPhone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email:</span>
+                      <span className="font-medium text-gray-900 line-clamp-1">{selectedBooking.customerEmail}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="col-span-2 border-t pt-2">
-                  <p className="text-gray-500">Nội dung chi tiết</p>
-                  <p className="text-gray-700 bg-gray-50 p-3 rounded-lg italic">
-                    {selectedBooking.note || 'Không có ghi chú thêm cho đơn hàng này.'}
-                  </p>
+
+                {/* Thông tin phòng */}
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900 mb-3 border-b pb-1 flex items-center gap-2">
+                    <Calendar size={14} className="text-gray-500" /> Chi tiết phòng
+                  </h4>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <p className="text-gray-500 text-[10px] mb-1">Loại phòng</p>
+                      <p className="font-medium text-gray-800 bg-gray-50 p-2 rounded border border-gray-100">
+                        {selectedBooking.roomTypeName}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-500 text-[10px]">Số lượng</p>
+                        <p className="font-medium">{selectedBooking.quantity} phòng</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-[10px]">Số khách</p>
+                        <p className="font-medium">{selectedBooking.numberOfGuests} người</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+                        <p className="text-blue-600 text-[10px] font-semibold mb-0.5">Nhận phòng</p>
+                        <p className="font-bold text-gray-800">{formatDate(selectedBooking.checkInDate)}</p>
+                      </div>
+                      <div className="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100">
+                        <p className="text-orange-600 text-[10px] font-semibold mb-0.5">Trả phòng</p>
+                        <p className="font-bold text-gray-800">{formatDate(selectedBooking.checkOutDate)}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Ghi chú */}
+                {selectedBooking.note && (
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900 mb-2 flex items-center gap-2">
+                      <Info size={14} className="text-gray-500" /> Ghi chú
+                    </h4>
+                    <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded-lg italic border border-gray-100">
+                      {selectedBooking.note}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-              {!selectedBooking.isRead && (
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-2">
+              <div className="flex gap-2">
+                {!selectedBooking.isRead && (
+                  <button
+                    onClick={async () => {
+                      await markAsRead(selectedBooking.notifId);
+                      setIsModalOpen(false);
+                    }}
+                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <CheckCheck size={14} /> Xác nhận đã đọc
+                  </button>
+                )}
                 <button
-                  onClick={async () => {
-                    await markAsRead(selectedBooking.notifId);
+                  onClick={() => {
                     setIsModalOpen(false);
+                    navigate(`/admin/bookings/${selectedBooking.id}`);
                   }}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                  className="flex-1 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-bold text-xs transition-all"
                 >
-                  <CheckCheck size={18} /> Xác nhận đã đọc
+                  Xem trên hệ thống
                 </button>
-              )}
+              </div>
               <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  navigate(`/admin/bookings/${selectedBooking.id}`);
-                }}
-                className="flex-1 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold text-sm transition-all"
+                onClick={() => setIsModalOpen(false)}
+                className="w-full py-2 text-gray-500 hover:text-gray-700 font-medium text-[10px] transition-colors"
               >
-                Xem trên hệ thống
+                Đóng
               </button>
             </div>
           </div>

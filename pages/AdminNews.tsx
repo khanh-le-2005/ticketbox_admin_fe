@@ -365,7 +365,7 @@ const AdminNews: React.FC = () => {
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto min-h-screen pb-12 animate-in fade-in duration-500">
+    <div className="max-w-[1600px] mx-auto min-h-screen pb-12 animate-in fade-in duration-500 px-10">
       <AnimationStyles />
       {/* Header section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">

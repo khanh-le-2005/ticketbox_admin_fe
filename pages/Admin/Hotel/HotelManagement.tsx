@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   FaHotel, FaPlus, FaSearch, FaEdit, FaTrash, FaStar, FaMapMarkerAlt,
-  FaChartPie, FaUserFriends, FaMoneyBillWave, FaBed, FaFilter
+  FaChartPie, FaUserFriends, FaMoneyBillWave, FaBed, FaFilter,
+  FaChevronLeft, FaChevronRight
 } from "react-icons/fa";
 import hotelApi from "@/apis/hotelApi";
 import { Hotel } from "@/type";
@@ -17,6 +18,9 @@ const HotelManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [totalElements, setTotalElements] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0); // Backend usually uses 0-indexed
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(10);
 
   const navigate = useNavigate();
 
@@ -27,11 +31,19 @@ const HotelManagement: React.FC = () => {
   const fetchHotels = async () => {
     setLoading(true);
     try {
-      const res: any = await hotelApi.getAll();
+      // --- 1. TRUYỀN THAM SỐ VÀO API ---
+      const params = {
+        page: currentPage, // State trang hiện tại
+        size: pageSize,          // Kích thước trang (có thể đưa vào state pageSize)
+        keyword: searchTerm // State từ khóa tìm kiếm
+      };
+
+      const res: any = await hotelApi.getAll(params);
 
       let contentList = [];
       let pageInfo = null;
 
+      // --- 2. XỬ LÝ DỮ LIỆU TRẢ VỀ (GIỮ NGUYÊN LOGIC LINH HOẠT) ---
       if (res?.data?.content) {
         contentList = res.data.content;
         pageInfo = res.data;
@@ -43,8 +55,17 @@ const HotelManagement: React.FC = () => {
         pageInfo = res;
       }
 
-      if (pageInfo) setTotalElements(pageInfo.totalElements || 0);
+      // --- 3. CẬP NHẬT STATE PHÂN TRANG ---
+      if (pageInfo) {
+        setTotalElements(pageInfo.totalElements || 0);
+        setTotalPages(pageInfo.totalPages || 0); // <--- QUAN TRỌNG: Để hiện số trang
+      } else {
+        // Fallback phòng khi API không trả về thông tin trang
+        setTotalElements(contentList.length);
+        setTotalPages(1);
+      }
 
+      // --- 4. MAP DỮ LIỆU ĐỂ HIỂN THỊ ẢNH ---
       const mappedData = Array.isArray(contentList) ? contentList.map((h: any) => ({
         ...h,
         rating: h.rating || 5.0,
@@ -64,7 +85,7 @@ const HotelManagement: React.FC = () => {
 
   useEffect(() => {
     fetchHotels();
-  }, []);
+  }, [currentPage, searchTerm]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
@@ -103,11 +124,10 @@ const HotelManagement: React.FC = () => {
     }
   };
 
-  const filteredHotels = hotels.filter(
-    (h) =>
-      h.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      h.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Client-side filtering is no longer needed since we have server-side search
+  // but kept as fallback for the current hotels in view if needed.
+  // We'll use result from fetchHotels directly.
+  const displayHotels = hotels;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
@@ -130,8 +150,7 @@ const HotelManagement: React.FC = () => {
             onClick={handleNavigateCreate}
             className="w-full lg:w-auto group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 font-semibold"
           >
-            <FaPlus className=" transition-transform duration-300" />
-            Thêm Khách Sạn Mới
+            <span className="flex items-center gap-2"><FaPlus/> Thêm Khách Sạn Mới</span>
           </button>
         </div>
 
@@ -180,6 +199,7 @@ const HotelManagement: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {/* Pagination UI */}
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -190,8 +210,8 @@ const HotelManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredHotels.length > 0 ? (
-                    filteredHotels.map((hotel: Hotel) => (
+                  {displayHotels.length > 0 ? (
+                    displayHotels.map((hotel: Hotel) => (
                       <tr
                         key={hotel.id}
                         className="hover:bg-slate-50/80 transition-colors group"
@@ -217,7 +237,7 @@ const HotelManagement: React.FC = () => {
                                 {hotel.name}
                               </h3>
                               <p className="text-sm text-slate-500 flex items-start gap-1.5 leading-relaxed">
-                                <FaMapMarkerAlt className="text-red-400 mt-0.5 flex-shrink-0" />
+                                <span className="text-red-400 mt-0.5 flex-shrink-0"><FaMapMarkerAlt/></span>
                                 <span className="line-clamp-2">{hotel.address}</span>
                               </p>
                             </div>
@@ -251,7 +271,7 @@ const HotelManagement: React.FC = () => {
                                       {formatCurrency(rt.priceMonToThu || 0)}
                                     </span>
                                     <span title="Sức chứa" className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                                      <FaUserFriends className="text-slate-400" /> {rt.standardCapacity}-{rt.maxCapacity}
+                                    <span className="text-slate-400"><FaUserFriends /></span> {rt.standardCapacity}-{rt.maxCapacity}
                                     </span>
                                   </div>
                                 </div>
@@ -314,7 +334,7 @@ const HotelManagement: React.FC = () => {
                     <tr>
                       <td colSpan={4} className="p-16 text-center">
                         <div className="flex flex-col items-center justify-center text-slate-300">
-                          <FaHotel size={48} className="mb-4 opacity-50" />
+                          <span className="text-slate-400"><FaHotel size={48}/></span>
                           <p className="text-lg font-medium text-slate-500">Không tìm thấy khách sạn nào</p>
                           <p className="text-sm">Thử thay đổi từ khóa tìm kiếm hoặc thêm mới.</p>
                         </div>
@@ -323,6 +343,46 @@ const HotelManagement: React.FC = () => {
                   )}
                 </tbody>
               </table>
+
+              {/* PAGINATION FOOTER */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row justify-between items-center p-4 bg-slate-50 border-t border-slate-100 gap-4">
+                  <span className="text-xs text-slate-500 font-medium">
+                    Hiển thị <span className="font-bold">{currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}</span> trên tổng số <span className="font-bold">{totalElements}</span> khách sạn
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                      disabled={currentPage === 0}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-white transition-all flex items-center justify-center"
+                    >
+                      <FaChevronLeft size={10} />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`min-w-[32px] h-8 rounded-lg text-xs font-bold border transition-all ${currentPage === pageNum
+                          ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                          }`}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                      disabled={currentPage === totalPages - 1}
+                      className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-white transition-all flex items-center justify-center"
+                    >
+                      <FaChevronRight size={10} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
