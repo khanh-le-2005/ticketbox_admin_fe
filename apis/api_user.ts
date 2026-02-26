@@ -1,5 +1,5 @@
-import axios from "axios";
-import axiosClient from "../axiosclient";
+// import axios from "axios";
+import axiosClient from "@/axiosclient";
 
 // =================================================================
 // 1. DEFINITIONS & INTERFACES
@@ -83,7 +83,7 @@ export const searchCustomers = async (keyword: string): Promise<Customer[]> => {
 const getUsersByRole = async (role: string): Promise<UserData[]> => {
   try {
     // Format URL chuẩn: /users?role=VALUE
-    const response = await axios.get<ApiResponse>(
+    const response = await axiosClient.get<ApiResponse>(
       `${BASE_URL}/users?role=${role.trim()}`
     );
 
@@ -144,7 +144,7 @@ export const getAllCustomers = async (): Promise<Customer[]> => {
 };
 export const getUserById = async (id: string): Promise<UserData> => {
   try {
-    const response = await axios.get(`${BASE_URL}/users/${id}`);
+    const response = await axiosClient.get(`${BASE_URL}/users/${id}`);
     if (response.data && response.data.data) {
       return response.data.data;
     }
@@ -171,7 +171,7 @@ export const createCompany = async (data: any) => {
     role: "TO_CHUC",
     phone: data.phone,
   };
-  return await axios.post(`${BASE_URL}/create-user`, payload);
+  return await axiosClient.post(`${BASE_URL}/create-user`, payload);
 };
 
 export const createStaff = async (data: any) => {
@@ -183,7 +183,7 @@ export const createStaff = async (data: any) => {
     role: data.role || "VAN_HANH",
     phone: data.phone,
   };
-  return await axios.post(`${BASE_URL}/create-user`, payload);
+  return await axiosClient.post(`${BASE_URL}/create-user`, payload);
 };
 
 export const updateCompany = async (id: string, data: any) => {
@@ -193,7 +193,7 @@ export const updateCompany = async (id: string, data: any) => {
     role: "TO_CHUC",
     phone: data.phone,
   };
-  return await axios.put(`${BASE_URL}/create-user/${id}`, payload);
+  return await axiosClient.put(`${BASE_URL}/create-user/${id}`, payload);
 };
 
 export const updateStaff = async (id: string, data: any) => {
@@ -203,11 +203,11 @@ export const updateStaff = async (id: string, data: any) => {
     role: data.role,
     phone: data.phone,
   };
-  return await axios.put(`${BASE_URL}/create-user/${id}`, payload);
+  return await axiosClient.put(`${BASE_URL}/create-user/${id}`, payload);
 };
 
 export const deleteUser = async (id: string) => {
-  await axios.delete(`${BASE_URL}/users/${id}`);
+  await axiosClient.delete(`${BASE_URL}/users/${id}`);
 };
 // ... (Code cũ giữ nguyên)
 

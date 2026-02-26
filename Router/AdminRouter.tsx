@@ -35,7 +35,8 @@ import HotelAvailability from "@/pages/Admin/Statistical/HotelAvailability";
 import NotificationSystem from "@/pages/Admin/Notification/NotificationSystem";
 import NotificationPage from "@/pages/Admin/Notification/NotificationPage";
 import SpecialPriceManager from "@/pages/Admin/Hotel/SpecialPriceManager";
-import HotelWarehouse from "@/pages/Admin/Hotel/HotelWarehouse";
+import HotelWarehouse from "@/pages/service management/HotelWarehouse";
+import HotelMenuPage from "@/pages/service management/HotelMenuPage";
 
 const AdminRouter = () => {
   return (
@@ -76,6 +77,7 @@ const AdminRouter = () => {
         <Route path="hotels/gantt-chart" element={<HotelGanttChart />} />
         <Route path="hotels/special-price" element={<SpecialPriceManager />} />
         <Route path="hotels/HotelWarehouse" element={<HotelWarehouse />} />
+        <Route path="hotels/HotelMenuPage" element={<HotelMenuPage />} />
 
 
 

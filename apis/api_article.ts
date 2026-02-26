@@ -92,6 +92,7 @@ export const getPublishedNewsByMenu = async (menu: string): Promise<Article[]> =
   } catch (error) {
     console.error(`Error fetching published news for menu ${menu}:`, error);
     throw error;
+    
   }
 };
 

@@ -197,7 +197,7 @@ const NotificationSystem: React.FC = () => {
   //   }
   // };
   // Sửa lại khai báo hàm nhận thêm tham số 'e'
-  const handleClickItem = async (notif: Notification) => {
+  const handleClickItem = async (notif: Notification, e?: React.MouseEvent) => {
     // 1. Log ngay khi click để xem sự kiện có bắt được không
     console.log("🚀 [START] Đã click vào thông báo:", notif);
 

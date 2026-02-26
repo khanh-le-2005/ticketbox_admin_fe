@@ -5,6 +5,7 @@ import {
     Info, XCircle, Loader2, Calendar, User, CreditCard, MapPin, Copy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const NotificationPage = () => {
     const [notifications, setNotifications] = useState([]);
@@ -82,7 +83,7 @@ const NotificationPage = () => {
             const cleanUrl = notif.targetUrl.split('?')[0].replace(/\/+$/, "");
             const bookingId = cleanUrl.split('/').pop();
 
-            console.log("Booking ID tách được:", bookingId);
+            // console.log("Booking ID tách được:", bookingId);
 
             if (bookingId) {
                 setIsDetailLoading(true);
@@ -100,7 +101,7 @@ const NotificationPage = () => {
                     }
                 } catch (error) {
                     console.error("Lỗi lấy chi tiết:", error);
-                    alert("Không thể tải đơn hàng (ID: " + bookingId + ")");
+                    toast.error("Không thể tải đơn hàng (ID: " + bookingId + ")");
                 } finally {
                     setIsDetailLoading(false);
                 }
@@ -142,7 +143,7 @@ const NotificationPage = () => {
 
     const handleCopyCode = (code) => {
         navigator.clipboard.writeText(code);
-        alert(`Đã sao chép mã: ${code}`);
+        toast.success(`Đã sao chép mã: ${code}`);
     };
 
     return (
