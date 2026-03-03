@@ -311,7 +311,7 @@ export const getCustomerDetailWithHistory = async (
 
     // --- 1. Map Show Bookings (Sửa tên biến) ---
     const tickets = (data.showBookings || []).map((item: any) => ({
-      id: item.id,
+      id: item.bookingId || item.id,
       requestId: item.requestId, // Giữ lại requestId để hiện mã
       showName: item.showName || "Vé sự kiện",
 
@@ -327,7 +327,7 @@ export const getCustomerDetailWithHistory = async (
 
     // --- 2. Map Hotel Bookings (Sửa tên biến) ---
     const rooms = (data.hotelBookings || []).map((item: any) => ({
-      id: item.id,
+      id: item.bookingId || item.id,
       roomName: item.hotelName || "Đặt phòng khách sạn",
 
       // 👇 Giữ nguyên tên createdAt
@@ -366,6 +366,20 @@ export const getCustomerDetailWithHistory = async (
   } catch (error) {
     console.error(`Lỗi lấy lịch sử khách hàng ${id}:`, error);
     return null;
+  }
+};
+
+// Hàm lấy chi tiết một booking cụ thể (mới thêm theo tài liệu)
+export const getBookingDetail = async (bookingId: string) => {
+  try {
+    const res: any = await axiosClient.get(`/bookings/${bookingId}/detail`);
+    // Nếu res là { success: true, data: { ... } } thì lấy res.data
+    // Nếu res là { bookingId: ... } (dữ liệu trực tiếp) thì lấy res
+    const result = res?.data || res;
+    return result;
+  } catch (error) {
+    console.error(`Lỗi lấy chi tiết booking ${bookingId}:`, error);
+    throw error;
   }
 };
 

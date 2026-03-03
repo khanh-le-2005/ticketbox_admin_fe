@@ -731,7 +731,7 @@ const Dashboard: React.FC = () => {
         ]);
       } else {
         const response = await axiosClient.get(`/shows/${selectedShowId}/stats`);
-        const d = response.data.data;
+        const d = response.data;
         uiData = {
           title: d.showName,
           totalRevenue: d.totalRevenue,

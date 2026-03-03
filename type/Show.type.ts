@@ -102,10 +102,11 @@ export interface IShowRequest {
   performers: string[];
 
   // 👇 THÊM TRƯỜNG NÀY
+  keepBannerImageId?: number | null;
   keepGalleryImageIds?: number[];
 
   ticketTypes: {
-    code: string; // Có thể rỗng
+    code?: string; // Có thể rỗng cho vé mới
     name: string;
     description: string;
     price: number;

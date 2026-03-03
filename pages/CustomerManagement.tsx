@@ -108,20 +108,22 @@ const CustomerManagement: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <HiOutlineUsers className="text-pink-600" size={28} />
+            <span className="text-pink-600"><HiOutlineUsers size={28} /></span>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý Khách hàng</h1>
           </div>
           <p className="text-gray-500">Danh sách người dùng đăng ký ứng dụng ({customers.length} kết quả).</p>
         </div>
         <div className="flex gap-2">
           <div className="relative group">
-            <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors" size={20} />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors">
+              <HiOutlineSearch size={20} />
+            </span>
             <input
               type="text"
-              placeholder="Tìm theo tên, email, sđt..."
+              placeholder="Tìm theo tên, email, sđt, mã đơn hàng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)} // Thay đổi state sẽ trigger useEffect ở trên
-              className="pl-10 pr-4 py-3 w-64 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm"
+              className="pl-10 pr-4 py-3 w-72 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm"
             />
           </div>
           <button
@@ -129,7 +131,9 @@ const CustomerManagement: React.FC = () => {
             className="p-3 text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"
             title="Làm mới"
           >
-            <HiOutlineRefresh size={22} className={loading ? 'animate-spin' : ''} />
+            <span className={loading ? 'animate-spin inline-block' : ''}>
+              <HiOutlineRefresh size={22} />
+            </span>
           </button>
         </div>
       </div>
@@ -198,7 +202,7 @@ const CustomerManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 text-gray-500 text-sm">
-                          <HiOutlineCalendar className="text-gray-400" />
+                          <span className="text-gray-400"><HiOutlineCalendar /></span>
                           <span className="font-mono text-xs">{formatDate(c.createdAt)}</span>
                         </div>
                       </td>

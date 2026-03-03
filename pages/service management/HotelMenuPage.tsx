@@ -152,7 +152,7 @@ const formatCurrency = (amount: number) => {
             Dịch Vụ & Thực Đơn
           </h1>
           <div className="inline-flex items-center gap-2 bg-rose-500/20 text-rose-300 px-4 py-1.5 rounded-full border border-rose-500/30 text-sm font-semibold mb-4 animate-pulse">
-            <AlertTriangle size={16} />
+            <AlertTriangle size={46} />
             CHỨC NĂNG ĐANG PHÁT TRIỂN
           </div>
           <p className="text-slate-400 text-lg font-medium">Quản lý các mặt hàng dịch vụ dành cho khách lưu trú</p>
@@ -333,12 +333,12 @@ const formatCurrency = (amount: number) => {
                           <Utensils size={14} />
                           <span>Món ăn sẵn sàng</span>
                         </div>
-                        <button 
+                        {/* <button 
                           className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg active:scale-90"
                           onClick={() => console.log(`Action for item: ${item.id}`)}
                         >
                           <Plus size={20} />
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </div>

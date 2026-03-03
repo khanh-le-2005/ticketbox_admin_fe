@@ -373,6 +373,11 @@ const AddShow: React.FC = () => {
       const keepIds = galleryItems.filter(item => item.originalId !== undefined).map(item => item.originalId as number);
       const newFiles = galleryItems.filter(item => item.file !== undefined).map(item => item.file as File);
 
+      // ✅ TÍNH TOÁN keepBannerImageId: 
+      // Nếu có bannerFile mới -> null (để BE lấy ảnh đầu tiên làm banner)
+      // Nếu không có bannerFile mới -> giữ lại bannerId cũ
+      const keepBannerId = bannerFile ? null : bannerId;
+
       // ✅ Thêm isFeatured vào payload
       const apiPayload: IShowRequest & { isFeatured: boolean } = {
         name: formData.name,
@@ -391,14 +396,25 @@ const AddShow: React.FC = () => {
           latitude: Number(formData.address.latitude) || 0,
           longitude: Number(formData.address.longitude) || 0,
         },
+        keepBannerImageId: keepBannerId,
         keepGalleryImageIds: keepIds,
         performers: formData.performers.filter((p) => p && p.trim() !== ""),
-        ticketTypes: formData.ticketTypes.map((t) => ({
-          code: t.code || "", name: t.name, description: t.description || "",
-          price: Number(t.price), totalQuantity: Number(t.totalQuantity),
-        })),
+        ticketTypes: formData.ticketTypes.map((t) => {
+          const ticketData: any = {
+            name: t.name,
+            description: t.description || "",
+            price: Number(t.price),
+            totalQuantity: Number(t.totalQuantity),
+          };
+          // ✅ Chỉ gửi code nếu là vé cũ (đã có code)
+          if (t.code && t.code.trim() !== "") {
+            ticketData.code = t.code;
+          }
+          return ticketData;
+        }),
       };
 
+      // ✅ QUAN TRỌNG: bannerFile phải nằm ĐẦU TIÊN nếu keepBannerId là null
       const filesToSend = [];
       if (bannerFile) filesToSend.push(bannerFile);
       if (newFiles.length > 0) filesToSend.push(...newFiles);

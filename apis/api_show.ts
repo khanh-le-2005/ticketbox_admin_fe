@@ -10,7 +10,7 @@ export const showApi = {
     // API có thể trả về một page object (ShowListResponse) hoặc một mảng IShow[] trực tiếp.
     const response = await axiosClient.get<ShowListResponse | IShow[]>(
       "/shows",
-      { params }
+      { params: { ...params, size: 100 } }
     );
 
     const data = response.data as any;

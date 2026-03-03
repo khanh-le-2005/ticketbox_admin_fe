@@ -41,6 +41,11 @@ const roomApi = {
   markRoomAsClean: (hotelId: string, roomId: string) => {
     return axiosClient.put(`/hotels/${hotelId}/rooms/${roomId}/clean`);
   },
+
+  // Cập nhật trạng thái phòng (mới)
+  updateRoomStatus: (hotelId: string, roomId: string, status: string) => {
+    return axiosClient.put(`/hotels/${hotelId}/rooms/${roomId}/status?status=${status}`);
+  },
 };
 
 export default roomApi;

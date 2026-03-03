@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const savedUser = localStorage.getItem("user");
       if (savedUser) {
         const parsedUser = JSON.parse(savedUser);
-        
+
         // CẬP NHẬT: Kiểm tra nếu role nằm trong danh sách cho phép
         if (allowedRoles.includes(parsedUser.role)) {
           setUser(parsedUser);
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { access_token, refresh_token, ...userInfo } = authData;
 
       // CẬP NHẬT: Kiểm tra quyền với danh sách ALLOWED_ROLES
-      if (! allowedRoles.includes(userInfo.role)) {
+      if (!allowedRoles.includes(userInfo.role)) {
         throw new Error("Bạn không có quyền truy cập vào hệ thống này.");
       }
 

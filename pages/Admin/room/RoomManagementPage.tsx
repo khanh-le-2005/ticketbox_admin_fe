@@ -20,7 +20,8 @@ import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
-  FaCheck
+  FaCheck,
+  FaExchangeAlt
 } from "react-icons/fa";
 import { RoomInstance, DashboardData } from "@/type/room.types";
 import Swal from "sweetalert2";
@@ -50,7 +51,7 @@ const RoomManagementPage: React.FC = () => {
   useEffect(() => {
     const fetchHotels = async () => {
       try {
-        const res: any = await hotelApi.getAll();
+        const res: any = await hotelApi.getAll({ size: 1000 });
         let hotelList = [];
         if (res?.data?.content) hotelList = res.data.content;
         else if (res?.data?.data?.content) hotelList = res.data.data.content;
@@ -179,6 +180,73 @@ const RoomManagementPage: React.FC = () => {
     } catch (error: any) {
       console.error("Lỗi dọn phòng:", error);
       toast.error(error.response?.data?.message || "Không thể dọn phòng.");
+    }
+  };
+
+  const handleChangeStatus = async (room: RoomInstance) => {
+    try {
+      // 1. Show Swal select
+      const { value: newStatus } = await Swal.fire({
+        title: "Đổi trạng thái phòng",
+        input: "select",
+        inputOptions: {
+          AVAILABLE: "Sẵn sàng",
+          OCCUPIED: "Đang ở",
+          DIRTY: "Chưa dọn",
+          MAINTENANCE: "Bảo trì",
+        },
+        inputValue: room.status,
+        showCancelButton: true,
+        confirmButtonText: "Cập nhật",
+        cancelButtonText: "Hủy",
+        inputValidator: (value) => {
+          if (value === room.status) {
+            return "Vui lòng chọn trạng thái khác trạng thái hiện tại";
+          }
+        },
+      });
+
+      if (!newStatus) return;
+
+      // 2. Call API update status
+      // Endpoint: PUT /api/hotels/{hotelId}/rooms/{roomId}/status?status={status}
+      await roomApi.updateRoomStatus(room.hotelId || selectedHotelId, room.id, newStatus);
+
+      toast.success("Cập nhật trạng thái thành công!");
+
+      // 3. Update UI
+      const oldStatus = room.status;
+      setRoomInstances((prev) =>
+        prev.map((r) => (r.id === room.id ? { ...r, status: newStatus } : r))
+      );
+
+      // Update Dashboard Stats
+      if (dashboardStats) {
+        const newStats = { ...dashboardStats };
+
+        // Decrement old
+        if (oldStatus === "AVAILABLE")
+          newStats.available.count = Math.max(0, newStats.available.count - 1);
+        else if (oldStatus === "OCCUPIED")
+          newStats.occupied.count = Math.max(0, newStats.occupied.count - 1);
+        else if (oldStatus === "DIRTY")
+          newStats.dirty.count = Math.max(0, newStats.dirty.count - 1);
+        else if (oldStatus === "MAINTENANCE")
+          newStats.maintenance.count = Math.max(0, newStats.maintenance.count - 1);
+
+        // Increment new
+        if (newStatus === "AVAILABLE") newStats.available.count++;
+        else if (newStatus === "OCCUPIED") newStats.occupied.count++;
+        else if (newStatus === "DIRTY") newStats.dirty.count++;
+        else if (newStatus === "MAINTENANCE") newStats.maintenance.count++;
+
+        setDashboardStats(newStats);
+      }
+    } catch (error: any) {
+      console.error("Lỗi cập nhật trạng thái:", error);
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái."
+      );
     }
   };
 
@@ -396,6 +464,13 @@ const RoomManagementPage: React.FC = () => {
                                   <FaBroom size={16} />
                                 </button>
                               )}
+                              <button
+                                onClick={() => handleChangeStatus(room)}
+                                className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Đổi trạng thái"
+                              >
+                                <FaExchangeAlt size={16} />
+                              </button>
                               {/* <button onClick={() => navigate(`/rooms/edit/${room.id}`)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Chỉnh sửa"><FaEdit size={16} /></button> */}
                               <button onClick={() => handleDeleteRoom(room.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Xóa"><FaTrash size={16} /></button>
                             </div>

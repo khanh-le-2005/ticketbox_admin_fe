@@ -21,6 +21,7 @@ import { showApi } from '../apis/api_show';
 // Interface phụ cho Show (để tránh lỗi TypeScript khi map dữ liệu)
 interface IShow {
   id: string;
+  slug?: string;
   title?: string;
   name?: string;
 }
@@ -94,8 +95,14 @@ const AddBanner: React.FC = () => {
 
           // ✅ LOGIC MỚI: Tự động chọn dropdown nếu link cũ có dạng /event/...
           if (data.link && data.link.includes('/event/')) {
-            const showIdFromLink = data.link.split('/').pop();
-            if (showIdFromLink) setSelectedShowId(showIdFromLink);
+            const pathSegments = data.link.split('/');
+            const lastSegment = pathSegments.pop();
+
+            if (lastSegment) {
+              // Thử tìm show theo slug trước, nếu không tìm thấy thì thử theo ID
+              // Vì link bây giờ có thể là /event/slug hoặc /event/id
+              setSelectedShowId(lastSegment);
+            }
           }
         } catch (error) {
           toast.error('Lỗi khi tải thông tin banner.');
@@ -133,9 +140,13 @@ const AddBanner: React.FC = () => {
     setSelectedShowId(showId);
 
     if (showId) {
-      // ✅ SỬA ĐÚNG LINK: /event/{id}
-      // React Router sẽ hiểu đây là link nội bộ và chuyển trang mượt mà
-      const clientLink = `/event/${showId}`;
+      // Tìm show trong danh sách để lấy slug
+      const selectedShow = shows.find(s => s.id === showId);
+      const identifier = selectedShow?.slug || showId;
+
+      // ✅ SỬA ĐÚNG LINK: /event/{slug}
+      // Ưu tiên dùng slug, nếu không có thì dùng id
+      const clientLink = `/event/${identifier}`;
 
       setFormData(prev => ({ ...prev, link: clientLink }));
     } else {
@@ -256,7 +267,7 @@ const AddBanner: React.FC = () => {
               }}
             />
             <p className="text-[10px] text-gray-400 mt-1 italic">
-              * Link nội bộ nên để dạng: /event/ID-CUA-SHOW
+              * Link nội bộ nên để dạng: /event/SLUG-HOAC-ID-CUA-SHOW
             </p>
           </div>
         </div>
