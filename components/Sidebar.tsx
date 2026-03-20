@@ -227,7 +227,7 @@ import React, { useState } from "react";
 import { GiPodium } from "react-icons/gi";
 import {
   HiOutlineViewGrid,
-  HiOutlineNewspaper, 
+  HiOutlineNewspaper,
   HiOutlinePhotograph,
   HiOutlineLogout,
   HiOutlineUser,
@@ -235,59 +235,278 @@ import {
   HiOutlineUsers,
   HiChevronDown, // Import thêm icon mũi tên
   HiChevronRight,
+  HiOutlineChartBar,
 } from "react-icons/hi";
 import { AiFillSignal } from "react-icons/ai";
 import { FaHotel, FaBell, FaShoppingCart } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MenuItem, SidebarProps } from "@/type/api_types";
+import { TbReportSearch } from "react-icons/tb";
+
+// const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
+//   const { user, logout } = useAuth();
+//   const navigate = useNavigate();
+//   const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+//   // --- Logic giữ nguyên ---
+//   const toggleMenu = (label: string) => {
+//     setOpenMenus((prev) =>
+//       prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+//     );
+//   };
+
+//   const menuItems: MenuItem[] = [
+//     { label: "Tổng quan", path: "/dashboard", icon: <HiOutlineViewGrid size={20} /> },
+
+
+//     {
+//       label: "Quản lý show",
+//       icon: <HiOutlineTicket size={20} />,
+//       children: [
+//         { label: "Danh sách và tạo show", path: "/shows" },
+//         { label: "Báo cáo doanh thu show", path: "/shows/sales-report" },
+//       ],
+//     },
+
+
+
+//     {
+//       label: "Quản lý khách sạn",
+//       icon: <FaHotel size={20} />,
+//       children: [
+//         { label: "Dashboard", path: "/hotels/dashboard" },
+//         // { label: "Quản lý khách sạn", path: "/hotels/HotelManagement" },
+//         // { label: "Quản lý phòng", path: "/rooms" },
+//         // { label: "Check-in / Check-out", path: "/CheckAction" },
+//         // { label: "Dọn phòng", path: "/cleanroom" },
+//         { label: "Danh sách booking", path: "/hotels/BookingByDate" },
+//         // { label: "Danh sách Trả Phòng ", path: "/hotels/DailyDepartures" },
+//         { label: "Danh sách Khách Đến ", path: "/hotels/DailyArrivals" },
+//         // { label: "Đặt phòng thủ công", path: "/hotels/manual-booking" },
+//         // { label: "Biểu đồ Gantt", path: "/hotels/gantt-chart" },
+//         // { label: "Giá đặc biệt", path: "/hotels/special-price" },
+//       ],
+//     },
+
+//     // {
+//     //   label: "Quản lý bán hàng",
+//     //   icon: <FaShoppingCart size={20} />,
+//     //   children: [
+//     //     { label: "Tạo hóa đơn", path: "/hotels/HotelWarehouse" },
+//     //     { label: "Thực đơn", path: "/hotels/HotelMenuPage" },
+//     //   ]
+//     // },
+
+//     // {
+//     //   label: "Thống kê",
+//     //   icon: <AiFillSignal size={20} />,
+//     //   children: [{ label: "Thống kê khách sạn", path: "/Statistical/HotelAvailability" }],
+//     // },
+//     {
+//       label: "Người dùng",
+//       icon: <HiOutlineUsers size={20} />,
+//       children: [
+//         { label: "Đối tác & Tổ chức", path: "/users/companies" },
+//         { label: "Nhân viên hệ thống", path: "/users/staff" },
+//         { label: "Khách hàng", path: "/users/customers" },
+//       ],
+//     },
+//     { label: "Quản lý Tin tức", path: "/news", icon: <HiOutlineNewspaper size={20} /> },
+//     { label: "Quản lý Banner", path: "/banners", icon: <HiOutlinePhotograph size={20} /> },
+//     { label: "Quản lý sân khấu", path: "/stage", icon: <GiPodium size={20} /> },
+//     { label: "Quản lý thông báo", path: "/NotificationPage", icon: <FaBell size={20} /> },
+//   ];
+
+//   const handleLogout = () => {
+//     logout();
+//     navigate("/login");
+//   };
+
+//   return (
+//     <aside
+//       className={`
+//         w-[280px] h-screen bg-[#0f172a] text-slate-300 flex flex-col
+//         fixed inset-y-0 left-0 z-50 border-r border-slate-800 shadow-2xl
+//         transition-all duration-300 ease-in-out
+//         ${isOpen ? "translate-x-0" : "-translate-x-full"}
+//       `}
+//     >
+//       {/* 1. Header: Gọn gàng hơn */}
+//       <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/60 bg-[#0f172a]">
+//         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-md shadow-pink-500/20">
+//           <HiOutlineViewGrid size={18} />
+//         </div>
+//         <div className="flex flex-col">
+//           <span className="text-lg font-bold text-white tracking-wide">MoMang</span>
+//           <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Dashboard</span>
+//         </div>
+//       </div>
+
+//       {/* 2. Menu Area: Custom scrollbar & Spacing */}
+//       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 custom-scrollbar">
+//         {menuItems.map((item) => {
+//           const isOpenMenu = openMenus.includes(item.label);
+//           const hasChildren = !!item.children;
+
+//           if (hasChildren) {
+//             return (
+//               <div key={item.label} className="mb-1">
+//                 <button
+//                   onClick={() => toggleMenu(item.label)}
+//                   className={`
+//                     w-full flex items-center justify-between px-3 py-2.5 rounded-lg
+//                     transition-all duration-200 group
+//                     ${isOpenMenu ? "bg-slate-800/50 text-white" : "hover:bg-slate-800/30 hover:text-white"}
+//                   `}
+//                 >
+//                   <div className="flex items-center gap-3">
+//                     <span className={`transition-colors ${isOpenMenu ? "text-pink-400" : "text-slate-400 group-hover:text-white"}`}>
+//                       {item.icon}
+//                     </span>
+//                     <span className="text-sm font-medium">{item.label}</span>
+//                   </div>
+//                   {isOpenMenu ? (
+//                     <span className="text-slate-500"><HiChevronDown size={16} /></span>
+//                   ) : (
+//                     <span className="text-slate-500"><HiChevronRight size={16} /></span>
+//                   )}
+//                 </button>
+
+//                 {/* Submenu với đường kẻ dọc hướng dẫn (Guide line) */}
+//                 <div
+//                   className={`
+//                     overflow-hidden transition-all duration-300 ease-in-out
+//                     ${isOpenMenu ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"}
+//                   `}
+//                 >
+//                   <div className="ml-5 pl-3 border-l border-slate-700 space-y-1">
+//                     {item.children?.map((child) => (
+//                       <NavLink
+//                         key={child.path}
+//                         to={child.path!}
+//                         end
+//                         onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
+//                         className={({ isActive }) => `
+//                           block px-3 py-2 rounded-md text-[13px] font-medium transition-all
+//                           ${isActive
+//                             ? "text-pink-400 bg-pink-500/10 translate-x-1"
+//                             : "text-slate-400 hover:text-white hover:bg-slate-800/30"
+//                           }
+//                         `}
+//                       >
+//                         {child.label}
+//                       </NavLink>
+//                     ))}
+//                   </div>
+//                 </div>
+//               </div>
+//             );
+//           }
+
+//           // Single Item
+//           return (
+//             <NavLink
+//               key={item.path}
+//               to={item.path!}
+//               end={item.path !== '/shows/sales-report'}
+//               onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
+//               className={({ isActive }) => `
+//                 flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all duration-200 group
+//                 ${isActive
+//                   ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg shadow-pink-900/20"
+//                   : "text-slate-300 hover:bg-slate-800/40 hover:text-white"
+//                 }
+//               `}
+//             >
+//               {({ isActive }) => (
+//                 <>
+//                   <span className={isActive ? "text-white" : "text-slate-400 group-hover:text-white"}>
+//                     {item.icon}
+//                   </span>
+//                   <span className="text-sm font-medium">{item.label}</span>
+//                 </>
+//               )}
+//             </NavLink>
+//           );
+//         })}
+//       </nav>
+
+//       {/* 3. Footer: User Info & Logout tách biệt rõ ràng */}
+//       <div className="p-4 bg-[#0f172a] border-t border-slate-800">
+//         {user && (
+//           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 mb-3 border border-slate-700/50">
+//             <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 shrink-0">
+//               <HiOutlineUser size={18} />
+//             </div>
+//             <div className="overflow-hidden">
+//               <p className="text-sm font-semibold text-white truncate">
+//                 {user.fullName || user.username}
+//               </p>
+//               <p className="text-[11px] text-slate-400 truncate">
+//                 {user.role === "ADMIN" ? "Administrator" : "Staff Member"}
+//               </p>
+//             </div>
+//           </div>
+//         )}
+
+//         <button
+//           onClick={handleLogout}
+//           className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors border border-dashed border-slate-700 hover:border-rose-500/30"
+//         >
+//           <HiOutlineLogout size={18} />
+//           <span>Đăng xuất</span>
+//         </button>
+//       </div>
+
+//       {/* CSS ẩn scrollbar nhưng vẫn giữ chức năng cuộn */}
+//       <style>{`
+//         .custom-scrollbar::-webkit-scrollbar {
+//           width: 0px;
+//           background: transparent;
+//         }
+//         .custom-scrollbar {
+//           -ms-overflow-style: none;
+//           scrollbar-width: none;
+//         }
+//       `}</style>
+//     </aside>
+//   );
+// };
+
+// export default Sidebar;
+// ... các import giữ nguyên ...
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
-  // --- Logic giữ nguyên ---
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
       prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
     );
   };
 
-  const menuItems: MenuItem[] = [
+  // 1. Định nghĩa mảng menu đầy đủ (Full Menu)
+  const allMenuItems: MenuItem[] = [
     { label: "Tổng quan", path: "/dashboard", icon: <HiOutlineViewGrid size={20} /> },
-    { label: "Quản lý Show", path: "/shows", icon: <HiOutlineTicket size={20} /> },
+    {
+      label: "Quản lý show",
+      icon: <HiOutlineTicket size={20} />,
+      children: [
+        { label: "Danh sách và tạo show", path: "/shows" },
+        { label: "Báo cáo doanh thu show", path: "/shows/sales-report" },
+      ],
+    },
     {
       label: "Quản lý khách sạn",
       icon: <FaHotel size={20} />,
       children: [
-        { label: "Dashboard khách sạn", path: "/hotels/dashboard" },
-        { label: "Quản lý khách sạn", path: "/hotels/HotelManagement" },
-        { label: "Quản lý phòng", path: "/rooms" },
-        { label: "Check-in / Check-out", path: "/CheckAction" },
-        { label: "Dọn phòng", path: "/cleanroom" },
+        { label: "Dashboard", path: "/hotels/dashboard" },
         { label: "Danh sách booking", path: "/hotels/BookingByDate" },
-        { label: "Danh sách Trả Phòng ", path: "/hotels/DailyDepartures" },
         { label: "Danh sách Khách Đến ", path: "/hotels/DailyArrivals" },
-        { label: "Đặt phòng thủ công", path: "/hotels/manual-booking" },
-        { label: "Biểu đồ Gantt", path: "/hotels/gantt-chart" },
-        { label: "Giá đặc biệt", path: "/hotels/special-price" },
       ],
-    },
-
-    {
-      label: "Quản lý bán hàng",
-      icon: <FaShoppingCart  size={20} />,
-      children: [
-        { label: "Tạo hóa đơn", path: "/hotels/HotelWarehouse" },
-        { label: "Thực đơn", path: "/hotels/HotelMenuPage" },
-      ]
-    },
-
-    {
-      label: "Thống kê",
-      icon: <AiFillSignal size={20} />,
-      children: [{ label: "Thống kê khách sạn", path: "/Statistical/HotelAvailability" }],
     },
     {
       label: "Người dùng",
@@ -300,9 +519,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     },
     { label: "Quản lý Tin tức", path: "/news", icon: <HiOutlineNewspaper size={20} /> },
     { label: "Quản lý Banner", path: "/banners", icon: <HiOutlinePhotograph size={20} /> },
-    { label: "Quản lý sân khấu", path: "/stage", icon: <GiPodium size={20} /> },
+    { label: "Quản lý sân khấu", path: "/stage", icon: <GiPodium size={20} /> }, // Mục cần giữ lại
+    { label: "Thống kê sân khấu", path: "/stage/dashboard", icon: <HiOutlineChartBar size={20} /> },
     { label: "Quản lý thông báo", path: "/NotificationPage", icon: <FaBell size={20} /> },
   ];
+
+  // 2. Logic Phân Quyền (Authorization Logic)
+  // Nếu là ADMIN -> hiện tất cả. Nếu không phải -> chỉ hiện Quản lý sân khấu
+  const filteredMenuItems = user?.role === "ADMIN" 
+    ? allMenuItems 
+    : allMenuItems.filter(item => item.path === "/stage");
 
   const handleLogout = () => {
     logout();
@@ -318,9 +544,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}
     >
-      {/* 1. Header: Gọn gàng hơn */}
+      {/* 1. Header */}
       <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/60 bg-[#0f172a]">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-md shadow-pink-500/20">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-md">
           <HiOutlineViewGrid size={18} />
         </div>
         <div className="flex flex-col">
@@ -329,9 +555,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         </div>
       </div>
 
-      {/* 2. Menu Area: Custom scrollbar & Spacing */}
+      {/* 2. Menu Area: Sử dụng filteredMenuItems đã lọc ở trên */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 custom-scrollbar">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isOpenMenu = openMenus.includes(item.label);
           const hasChildren = !!item.children;
 
@@ -359,25 +585,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   )}
                 </button>
 
-                {/* Submenu với đường kẻ dọc hướng dẫn (Guide line) */}
-                <div
-                  className={`
-                    overflow-hidden transition-all duration-300 ease-in-out
-                    ${isOpenMenu ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"}
-                  `}
-                >
+                <div className={`overflow-hidden transition-all duration-300 ${isOpenMenu ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
                   <div className="ml-5 pl-3 border-l border-slate-700 space-y-1">
                     {item.children?.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path!}
+                        end
                         onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
                         className={({ isActive }) => `
                           block px-3 py-2 rounded-md text-[13px] font-medium transition-all
-                          ${isActive
-                            ? "text-pink-400 bg-pink-500/10 translate-x-1"
-                            : "text-slate-400 hover:text-white hover:bg-slate-800/30"
-                          }
+                          ${isActive ? "text-pink-400 bg-pink-500/10 translate-x-1" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}
                         `}
                       >
                         {child.label}
@@ -389,16 +607,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             );
           }
 
-          // Single Item
           return (
             <NavLink
               key={item.path}
               to={item.path!}
+              end
               onClick={() => window.innerWidth < 1024 && setIsOpen(false)}
               className={({ isActive }) => `
                 flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all duration-200 group
                 ${isActive
-                  ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg shadow-pink-900/20"
+                  ? "bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-lg"
                   : "text-slate-300 hover:bg-slate-800/40 hover:text-white"
                 }
               `}
@@ -416,7 +634,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         })}
       </nav>
 
-      {/* 3. Footer: User Info & Logout tách biệt rõ ràng */}
+      {/* 3. Footer */}
       <div className="p-4 bg-[#0f172a] border-t border-slate-800">
         {user && (
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 mb-3 border border-slate-700/50">
@@ -424,9 +642,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
               <HiOutlineUser size={18} />
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-semibold text-white truncate">
-                {user.fullName || user.username}
-              </p>
+              <p className="text-sm font-semibold text-white truncate">{user.fullName || user.username}</p>
               <p className="text-[11px] text-slate-400 truncate">
                 {user.role === "ADMIN" ? "Administrator" : "Staff Member"}
               </p>
@@ -436,23 +652,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors border border-dashed border-slate-700 hover:border-rose-500/30"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors border border-dashed border-slate-700"
         >
           <HiOutlineLogout size={18} />
           <span>Đăng xuất</span>
         </button>
       </div>
 
-      {/* CSS ẩn scrollbar nhưng vẫn giữ chức năng cuộn */}
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
-        }
-        .custom-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 0px; background: transparent; }
+        .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </aside>
   );

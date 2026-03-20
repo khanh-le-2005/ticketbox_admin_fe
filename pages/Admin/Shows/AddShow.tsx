@@ -105,112 +105,74 @@ const AddShow: React.FC = () => {
     fetchCompanies();
   }, [isEditMode, copiedShow]);
 
-  // 2. LOGIC COPY
+  // 2. CONSOLIDATED INITIALIZATION LOGIC
   useEffect(() => {
-    if (!isEditMode && copiedShow) {
-      toast.info("Đã sao chép dữ liệu.");
+    const fetchFullDataAndPopulate = async (showId: string, isCopying: boolean) => {
+      try {
+        setFetching(true);
+        const res: any = await showApi.getById(showId);
+        const data = res?.data || res;
 
-      const oldGalleryIds = copiedShow.galleryImageIds || [];
-      const initGallery: GalleryItem[] = oldGalleryIds.map((imgId: number) => ({
-        id: `copy-${imgId}-${Date.now()}`,
-        url: showApi.getImageUrl(imgId),
-        originalId: imgId
-      }));
-      setGalleryItems(initGallery);
-
-      if (copiedShow.bannerImageId) {
-        setBannerPreview(showApi.getImageUrl(copiedShow.bannerImageId));
-      }
-
-      setFormData({
-        name: `${copiedShow.name} (Copy)`,
-        description: copiedShow.description || "",
-        genre: copiedShow.genre || "",
-        images: [],
-        // ✅ Copy trạng thái nổi bật
-        isFeatured: (copiedShow as any).isFeatured || false,
-        startTime: toInputDate(copiedShow.startTime),
-        endTime: toInputDate(copiedShow.endTime),
-        address: {
-          specificAddress: copiedShow.address?.specificAddress || "",
-          province: copiedShow.address?.province || "",
-          district: copiedShow.address?.district || "",
-          ward: copiedShow.address?.ward || "",
-          latitude: Number(copiedShow.address?.latitude) || 0,
-          longitude: Number(copiedShow.address?.longitude) || 0,
-        },
-        performers: copiedShow.performers?.length > 0 ? copiedShow.performers : [""],
-        ticketTypes: copiedShow.ticketTypes?.length > 0
-          ? copiedShow.ticketTypes.map((t: any) => ({
-            code: "",
-            name: t.name || "",
-            description: t.description || "",
-            price: Number(t.price) || 0,
-            totalQuantity: Number(t.totalQuantity) || 0,
-          }))
-          : [{ code: "STD", name: "Vé thường", description: "", price: 0, totalQuantity: 0 }],
-        companyId: copiedShow.companyId || (copiedShow.organizer ? copiedShow.organizer.id : ""),
-      });
-    }
-  }, [copiedShow, isEditMode]);
-
-  // 3. LOGIC EDIT
-  useEffect(() => {
-    if (isEditMode && id) {
-      const fetchShowData = async () => {
-        try {
-          const res: any = await showApi.getById(id);
-          const data = res?.data || res;
-
-          if (data) {
-            if (data.bannerImageId) {
-              setBannerId(data.bannerImageId);
-              setBannerPreview(showApi.getImageUrl(data.bannerImageId));
-            }
-            const oldGalleryIds = data.galleryImageIds || [];
-            const initGallery: GalleryItem[] = oldGalleryIds.map((imgId: number) => ({
-              id: `old-${imgId}`,
-              url: showApi.getImageUrl(imgId),
-              originalId: imgId
-            }));
-            setGalleryItems(initGallery);
-
-            setFormData({
-              name: data.name || "",
-              description: data.description || "",
-              genre: data.genre || "",
-              images: [],
-              // ✅ Load trạng thái nổi bật từ DB
-              isFeatured: data.isFeatured || false,
-              startTime: toInputDate(data.startTime),
-              endTime: toInputDate(data.endTime),
-              address: {
-                specificAddress: data.address?.specificAddress || "",
-                province: data.address?.province || "",
-                district: data.address?.district || "",
-                ward: data.address?.ward || "",
-                latitude: Number(data.address?.latitude) || 0,
-                longitude: Number(data.address?.longitude) || 0,
-              },
-              performers: data.performers?.length > 0 ? data.performers : [""],
-              ticketTypes: data.ticketTypes?.length > 0
-                ? data.ticketTypes.map((t: any) => ({
-                  code: t.code || "", name: t.name || "", description: t.description || "",
-                  price: Number(t.price) || 0, totalQuantity: Number(t.totalQuantity) || 0,
-                }))
-                : [{ code: "STD", name: "Vé thường", description: "", price: 0, totalQuantity: 0 }],
-              companyId: data.companyId || (data.organizer ? data.organizer.id : ""),
-            });
+        if (data) {
+          // Image data
+          if (data.bannerImageId) {
+            setBannerId(data.bannerImageId);
+            setBannerPreview(showApi.getImageUrl(data.bannerImageId));
           }
-        } catch (error) {
-          toast.error("Không thể tải dữ liệu show.");
-        } finally {
-          setFetching(false);
+          const oldGalleryIds = data.galleryImageIds || [];
+          const initGallery: GalleryItem[] = oldGalleryIds.map((imgId: number) => ({
+            id: isCopying ? `copy-${imgId}-${Date.now()}` : `old-${imgId}`,
+            url: showApi.getImageUrl(imgId),
+            originalId: imgId
+          }));
+          setGalleryItems(initGallery);
+
+          toast.info(isCopying ? "Đã sao chép dữ liệu đầy đủ." : "Đã tải dữ liệu show.");
+
+          // Form data
+          setFormData({
+            name: isCopying ? `${data.name} (Copy)` : (data.name || ""),
+            description: data.description || "",
+            genre: data.genre || "",
+            images: [],
+            isFeatured: data.isFeatured || false,
+            startTime: toInputDate(data.startTime),
+            endTime: toInputDate(data.endTime),
+            address: {
+              specificAddress: data.address?.specificAddress || "",
+              province: data.address?.province || "",
+              district: data.address?.district || "",
+              ward: data.address?.ward || "",
+              latitude: Number(data.address?.latitude) || 0,
+              longitude: Number(data.address?.longitude) || 0,
+            },
+            performers: data.performers?.length > 0 ? data.performers : [""],
+            ticketTypes: data.ticketTypes?.length > 0
+              ? data.ticketTypes.map((t: any) => ({
+                code: isCopying ? "" : (t.code || ""), 
+                name: t.name || "", 
+                description: t.description || "",
+                price: Number(t.price) || 0, 
+                totalQuantity: Number(t.totalQuantity) || 0,
+              }))
+              : [{ code: "STD", name: "Vé thường", description: "", price: 0, totalQuantity: 0 }],
+            companyId: data.companyId || (data.organizer ? data.organizer.id : ""),
+          });
         }
-      };
-      fetchShowData();
+      } catch (error) {
+        toast.error("Không thể tải dữ liệu show.");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    if (isEditMode && id) {
+      fetchFullDataAndPopulate(id, false);
+    } else if (copiedShow?.id) {
+      // If copying, we fetch full data by the ID of the source show
+      fetchFullDataAndPopulate(copiedShow.id, true);
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, copiedShow]);
 
   // HANDLERS...
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -379,11 +341,11 @@ const AddShow: React.FC = () => {
       const keepBannerId = bannerFile ? null : bannerId;
 
       // ✅ Thêm isFeatured vào payload
-      const apiPayload: IShowRequest & { isFeatured: boolean } = {
+      const apiPayload: any = {
         name: formData.name,
         description: formData.description || "",
         genre: formData.genre || "Nhạc Pop",
-        isFeatured: formData.isFeatured, // Gửi lên server
+        isFeatured: formData.isFeatured,
         startTime: formatToBackendDate(formData.startTime),
         endTime: formatToBackendDate(formData.endTime),
         companyId: formData.companyId,
@@ -396,23 +358,19 @@ const AddShow: React.FC = () => {
           latitude: Number(formData.address.latitude) || 0,
           longitude: Number(formData.address.longitude) || 0,
         },
-        keepBannerImageId: keepBannerId,
-        keepGalleryImageIds: keepIds,
         performers: formData.performers.filter((p) => p && p.trim() !== ""),
-        ticketTypes: formData.ticketTypes.map((t) => {
-          const ticketData: any = {
-            name: t.name,
-            description: t.description || "",
-            price: Number(t.price),
-            totalQuantity: Number(t.totalQuantity),
-          };
-          // ✅ Chỉ gửi code nếu là vé cũ (đã có code)
-          if (t.code && t.code.trim() !== "") {
-            ticketData.code = t.code;
-          }
-          return ticketData;
-        }),
+        ticketTypes: formData.ticketTypes.map((t) => ({
+          name: t.name,
+          description: t.description || "",
+          price: Number(t.price),
+          totalQuantity: Number(t.totalQuantity),
+          ...(t.code && t.code.trim() !== "" ? { code: t.code } : {})
+        })),
       };
+
+      // 2. PHẦN QUAN TRỌNG: Xử lý ID ảnh (Dùng chung logic keep cho cả Add/Edit/Copy)
+      apiPayload.keepBannerImageId = keepBannerId;
+      apiPayload.keepGalleryImageIds = keepIds;
 
       // ✅ QUAN TRỌNG: bannerFile phải nằm ĐẦU TIÊN nếu keepBannerId là null
       const filesToSend = [];
@@ -506,7 +464,7 @@ const AddShow: React.FC = () => {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-1">
-                  <HiOutlineOfficeBuilding className="text-pink-500" />
+                  <span className="text-pink-500"><HiOutlineOfficeBuilding /></span>
                   Công ty / BTC *
                 </label>
                 <select
@@ -538,7 +496,7 @@ const AddShow: React.FC = () => {
                 <HiOutlineTicket size={18} /> Hạng vé & Giá
               </div>
               <button type="button" onClick={addTicketType} className="text-[10px] font-bold text-pink-600 bg-pink-50 px-3 py-1.5 rounded-lg uppercase">
-                <HiOutlinePlus className="inline" /> Thêm hạng
+                <span className="inline"><HiOutlinePlus /></span> Thêm hạng
               </button>
             </div>
             <div className="overflow-hidden border border-gray-100 rounded-2xl">
@@ -582,7 +540,7 @@ const AddShow: React.FC = () => {
           {/* 1. ẢNH BÌA */}
           <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-bold text-gray-900 border-b border-gray-50 pb-3 text-sm flex gap-2 justify-between">
-              <span className="flex gap-2"><HiOutlinePhotograph className="text-pink-500" /> Ảnh bìa (Banner)</span>
+              <span className="flex gap-2"><span className="text-pink-500"><HiOutlinePhotograph /></span> Ảnh bìa (Banner)</span>
               <span className="text-[10px] text-gray-400 font-normal">Max 5MB</span>
             </h3>
             <div className="flex flex-col items-center gap-4">
@@ -610,7 +568,7 @@ const AddShow: React.FC = () => {
           <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
             <div className="flex justify-between items-center border-b border-gray-50 pb-3">
               <h3 className="font-bold text-gray-900 text-sm flex gap-2">
-                <HiOutlinePhotograph className="text-blue-500" /> Thư viện ảnh
+                <span className="text-blue-500"><HiOutlinePhotograph /></span> Thư viện ảnh
               </h3>
               <button type="button" onClick={() => galleryInputRef.current?.click()} className="text-[10px] font-bold text-blue-500 uppercase hover:underline">+ Thêm ảnh</button>
             </div>
@@ -628,7 +586,7 @@ const AddShow: React.FC = () => {
                 >
                   <img src={item.url} className="w-full h-full object-cover pointer-events-none" alt={`Gallery ${idx}`} />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <HiOutlineSelector className="text-white drop-shadow-md" size={24} />
+                    <span className="text-white drop-shadow-md"><HiOutlineSelector size={24} /></span>
                   </div>
                   {item.file && (
                     <span className="absolute bottom-1 left-1 bg-green-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm">New</span>
@@ -661,7 +619,7 @@ const AddShow: React.FC = () => {
           {/* ĐỊA ĐIỂM */}
           <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-bold text-gray-900 flex items-center gap-2 border-b border-gray-50 pb-3 text-sm">
-              <HiOutlineLocationMarker size={20} className="text-pink-500" /> Địa điểm
+              <span className="text-pink-500"><HiOutlineLocationMarker size={20} /></span> Địa điểm
             </h3>
             <div className="space-y-4">
               <div>
@@ -692,7 +650,7 @@ const AddShow: React.FC = () => {
 
           {/* NGHỆ SĨ */}
           <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-            <div className="flex justify-between border-b pb-3"><h3 className="font-bold text-sm flex gap-2"><HiOutlineUserGroup className="text-pink-500" /> Nghệ sĩ</h3><button type="button" onClick={addPerformer} className="text-pink-500 text-xs font-bold">+ Thêm</button></div>
+            <div className="flex justify-between border-b pb-3"><h3 className="font-bold text-sm flex gap-2"><span className="text-pink-500"><HiOutlineUserGroup /></span> Nghệ sĩ</h3><button type="button" onClick={addPerformer} className="text-pink-500 text-xs font-bold">+ Thêm</button></div>
             <div className="space-y-2">
               {formData.performers.map((p, idx) => (
                 <div key={idx} className="flex gap-2"><input className="flex-1 border rounded p-2 text-sm" value={p} onChange={(e) => updatePerformer(idx, e.target.value)} /><button type="button" onClick={() => removePerformer(idx)} className="text-gray-300"><HiOutlineX /></button></div>

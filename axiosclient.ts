@@ -85,14 +85,15 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
       throw new Error("No refresh token available");
     }
 
-    // 3. Gọi API Refresh
+    // 3. Gọi API Refresh - Update body key to refreshToken (camelCase)
     const res = await axios.post(
       `${BASE_URL}/auth/refresh-token`,
-      { refreshToken },
+      { refreshToken: refreshToken }, // Match screenshot
       { headers: { "Content-Type": "application/json" } }
     );
 
-    const resData = res.data?.data || res.data;
+    // Screenshot shows: { success: true, message: "...", data: { access_token: "...", refresh_token: "..." } }
+    const resData = res.data?.data;
 
     const newAccessToken = resData?.access_token;
     const newRefreshToken = resData?.refresh_token;
@@ -104,10 +105,9 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
 
     console.log("AxiosClient: Refresh success. Updating tokens.");
 
-    // 5. Lưu token mới vào LocalStorage (giữ key là camelCase để app dùng)
+    // 5. Lưu token mới vào LocalStorage
     localStorage.setItem("accessToken", newAccessToken);
 
-    // Nếu API có trả về refresh token mới thì cập nhật luôn
     if (newRefreshToken) {
       localStorage.setItem("refreshToken", newRefreshToken);
     }
@@ -115,7 +115,7 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
     // 6. Cập nhật lại header mặc định cho instance axios
     axiosClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
 
-    // 7. Xử lý hàng đợi đang chờ (failedQueue)
+    // 7. Xử lý hàng đợi đang chờ
     processQueue(null, newAccessToken);
 
     // 8. Thực hiện lại request ban đầu bị lỗi
@@ -127,13 +127,11 @@ const handleRefreshToken = async (originalRequest: InternalAxiosRequestConfig & 
   } catch (refreshError: any) {
     console.error("AxiosClient: Refresh failed.", refreshError);
 
-    // Nếu refresh thất bại -> Hủy toàn bộ hàng đợi & Logout
     processQueue(refreshError, null);
 
     const msg = refreshError?.response?.data?.message || "Phiên đăng nhập đã hết hạn (Lỗi gia hạn)";
     return handleLogout(msg);
   } finally {
-    // Luôn reset cờ trạng thái
     isRefreshing = false;
   }
 };
@@ -219,15 +217,16 @@ axiosClient.interceptors.response.use(
     const status = error.response.status;
     const msg = ((error.response.data as any)?.message || "").toLowerCase();
 
-    if (originalRequest.url?.includes("/auth/refresh-token")) {
-      return handleLogout("Phiên đăng nhập đã hết hạn");
-    }
-
     // CASE 1: AccessToken hết hạn → REFRESH
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       console.log("AxiosClient: 401 detected → refreshing token");
       return handleRefreshToken(originalRequest);
+    }
+
+    if (status === 401) {
+      // Nếu đã retry rồi mà vẫn 401 thì mới báo lỗi hoặc logout
+      console.error("AxiosClient: 401 after retry or other auth error");
     }
 
     if (status === 403) {

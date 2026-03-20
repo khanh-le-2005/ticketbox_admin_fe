@@ -66,13 +66,23 @@ const HotelManagement: React.FC = () => {
       }
 
       // --- 4. MAP DỮ LIỆU ĐỂ HIỂN THỊ ẢNH ---
-      const mappedData = Array.isArray(contentList) ? contentList.map((h: any) => ({
-        ...h,
-        rating: h.rating || 5.0,
-        avatarUrl: (h.galleryImageIds && h.galleryImageIds.length > 0)
-          ? `${IMAGE_BASE_URL}/${h.galleryImageIds[0]}`
-          : FALLBACK_IMAGE
-      })) : [];
+      const mappedData = Array.isArray(contentList) ? contentList.map((h: any) => {
+        let avatarUrl = FALLBACK_IMAGE;
+
+        if (h.logo) {
+          avatarUrl = h.logo.startsWith('http') ? h.logo : `${IMAGE_BASE_URL}/${h.logo}`;
+        } else if (h.galleryImageIds && h.galleryImageIds.length > 0) {
+          const firstImg = h.galleryImageIds[0];
+          avatarUrl = firstImg.startsWith('http') ? firstImg : `${IMAGE_BASE_URL}/${firstImg}`;
+        }
+
+        return {
+          ...h,
+          rating: h.rating || 5.0,
+          minPrice: h.lowestPrice ?? h.minPrice ?? 0,
+          avatarUrl
+        };
+      }) : [];
 
       setHotels(mappedData);
     } catch (error) {
@@ -150,7 +160,7 @@ const HotelManagement: React.FC = () => {
             onClick={handleNavigateCreate}
             className="w-full lg:w-auto group bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 font-semibold"
           >
-            <span className="flex items-center gap-2"><FaPlus/> Thêm Khách Sạn Mới</span>
+            <span className="flex items-center gap-2"><FaPlus /> Thêm Khách Sạn Mới</span>
           </button>
         </div>
 
@@ -237,7 +247,7 @@ const HotelManagement: React.FC = () => {
                                 {hotel.name}
                               </h3>
                               <p className="text-sm text-slate-500 flex items-start gap-1.5 leading-relaxed">
-                                <span className="text-red-400 mt-0.5 flex-shrink-0"><FaMapMarkerAlt/></span>
+                                <span className="text-red-400 mt-0.5 flex-shrink-0"><FaMapMarkerAlt /></span>
                                 <span className="line-clamp-2">{hotel.address}</span>
                               </p>
                             </div>
@@ -271,7 +281,7 @@ const HotelManagement: React.FC = () => {
                                       {formatCurrency(rt.priceMonToThu || 0)}
                                     </span>
                                     <span title="Sức chứa" className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100">
-                                    <span className="text-slate-400"><FaUserFriends /></span> {rt.standardCapacity}-{rt.maxCapacity}
+                                      <span className="text-slate-400"><FaUserFriends /></span> {rt.standardCapacity}-{rt.maxCapacity}
                                     </span>
                                   </div>
                                 </div>
@@ -334,7 +344,7 @@ const HotelManagement: React.FC = () => {
                     <tr>
                       <td colSpan={4} className="p-16 text-center">
                         <div className="flex flex-col items-center justify-center text-slate-300">
-                          <span className="text-slate-400"><FaHotel size={48}/></span>
+                          <span className="text-slate-400"><FaHotel size={48} /></span>
                           <p className="text-lg font-medium text-slate-500">Không tìm thấy khách sạn nào</p>
                           <p className="text-sm">Thử thay đổi từ khóa tìm kiếm hoặc thêm mới.</p>
                         </div>

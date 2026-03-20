@@ -23,6 +23,7 @@ import CheckAction from "@/pages/Admin/Checkroom/CheckAction";
 import CleanRoomAction from "@/pages/Admin/Checkroom/CleanRoomAction";
 import StageDesignerPage from "@/pages/Admin/Stage/StageDesigner";
 import StageCheckInPage from "@/pages/Admin/Stage/StageCheckIn";
+import StageDashboardPage from "@/pages/Admin/Stage/StageDashboard";
 import DailyArrivals from "@/pages/Admin/Hotel/DailyArrival";
 import BookingByDate from "@/pages/Admin/Hotel/BookingByDate";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -37,6 +38,7 @@ import NotificationPage from "@/pages/Admin/Notification/NotificationPage";
 import SpecialPriceManager from "@/pages/Admin/Hotel/SpecialPriceManager";
 import HotelWarehouse from "@/pages/service management/HotelWarehouse";
 import HotelMenuPage from "@/pages/service management/HotelMenuPage";
+import SalesReport from "@/pages/Admin/Shows/SalesReport";
 
 const AdminRouter = () => {
   return (
@@ -54,10 +56,15 @@ const AdminRouter = () => {
         {/* Quản lý sân khấu */}
         <Route path="stage" element={<Stagemanager />} />
         <Route path="/design/new" element={<StageDesignerPage />} />
+
         {/* Trang thiết kế: Chỉnh sửa theo ID */}
         <Route path="/design/:id" element={<StageDesignerPage />} />
         {/* Trang Check-in: Theo ID */}
         <Route path="/checkin/:id" element={<StageCheckInPage />} />
+        {/* Trang Thống kê Sân Khấu (Tổng hợp tất cả) */}
+        <Route path="/stage/dashboard" element={<StageDashboardPage />} />
+        {/* Trang Thống kê Sân Khấu: Theo ID */}
+        <Route path="/stage/dashboard/:id" element={<StageDashboardPage />} />
 
         {/* Quản lý Khách sạn */}
         <Route path="hotels/dashboard" element={<HotelDashboard />} />
@@ -78,9 +85,6 @@ const AdminRouter = () => {
         <Route path="hotels/special-price" element={<SpecialPriceManager />} />
         <Route path="hotels/HotelWarehouse" element={<HotelWarehouse />} />
         <Route path="hotels/HotelMenuPage" element={<HotelMenuPage />} />
-
-
-
 
         {/* {bảng thống kê khách sạn} */}
         <Route path="statistical/HotelAvailability" element={<HotelAvailability />} />
@@ -129,8 +133,7 @@ const AdminRouter = () => {
         <Route path="shows" element={<ShowManagement />} />
         <Route path="shows/add" element={<AddShow />} />
         <Route path="shows/edit/:id" element={<AddShow />} />
-
-        <Route path="config" element={<CommonModule title="Configuration" />} />
+        <Route path="shows/sales-report/:showId?" element={<SalesReport />} />
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
